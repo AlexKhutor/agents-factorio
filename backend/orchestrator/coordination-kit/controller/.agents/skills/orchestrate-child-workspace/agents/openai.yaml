@@ -1,4 +1,0 @@
-interface:
-  display_name: "Orchestrate Child Workspace"
-  short_description: "Route work through a managed child Codex chat"
-  default_prompt: "Use $orchestrate-child-workspace to route one bounded task to its owner, require the visible status shell before long execution, and report and stop instead of repairing any child subsystem."

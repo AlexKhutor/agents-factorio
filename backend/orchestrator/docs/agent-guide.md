@@ -1,73 +1,47 @@
-# Orchestrator Maintainer Agent Guide
+# Backend Maintainer Guide
 
-Use this guide when changing the component under `orchestrator/` or its
-controller and worker delivery adapters.
+Use this guide when changing the Application Gateway (`backend/orchestrator`)
+or the controller template it ships in. The repository-wide rules are in
+[AGENTS.md](../../../AGENTS.md).
 
-## Workspace Ownership
+## Read first
 
-The agent running in this isolated VS Code owns `orchestrator-development`.
-It implements and verifies orchestrator source, adapters, tests, isolation
-integration, and component documentation in this repository. Do not redirect
-that work to a hypothetical separate orchestrator-development agent.
+1. [architecture.md](architecture.md) - the three parts and what each owns.
+2. [claude-code-provider.md](claude-code-provider.md) - agents as Claude Code
+   sessions, permission modes, plan usage, per-turn commits.
+3. [project-memory.md](project-memory.md) - memory scopes, delivery, approval.
+4. [application-gateway-operations.md](application-gateway-operations.md) and
+   [application-gateway-security.md](application-gateway-security.md).
+5. [application-contract.md](application-contract.md) and
+   [application-frontend-kit.md](application-frontend-kit.md) when a change
+   reaches Atlas.
 
-`Agents_Factorio_Control` owns cross-project coordination, task dispatch,
-deterministic report acceptance, optional review policy, and integration
-priorities. SampleApp owns its spatial and VR implementation. Neither workspace
-silently edits this repository in place of its active owner.
-
-## Required Reading
-
-1. [README.md](README.md)
-2. [architecture.md](architecture.md)
-3. [next-architecture-improvements.md](next-architecture-improvements.md)
-4. [orchestrator-protocol.md](orchestrator-protocol.md)
-5. [engineering-rules.md](engineering-rules.md)
-6. [source-editing-on-windows.md](source-editing-on-windows.md)
-7. [serialized-control-queue.md](serialized-control-queue.md)
-8. [report-operations.md](report-operations.md)
-9. [child-chat-routing.md](child-chat-routing.md)
-10. [controller-wake-observer.md](controller-wake-observer.md)
-11. [intent-confirmation-workflow.md](intent-confirmation-workflow.md)
-12. [incident-handling.md](incident-handling.md)
-13. [model-selection-policy.md](model-selection-policy.md)
-14. [../../docs/workspace/context-and-media.md](../../docs/workspace/context-and-media.md)
-
-Read the attention and VR documents only when the task touches those contracts.
-
-## Validation Setup
-
-Create the project-local Python environment and install validation
-dependencies:
+## Checking a change
 
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+cd backend/orchestrator
+npm ci
+node scripts/run-tests.mjs                                   # every suite
+node --test test/<suite>.test.mjs                            # one suite
+node scripts/build-application-gateway-runtime.mjs           # rebuild the bundle
+node scripts/build-application-gateway-runtime.mjs --verify  # bundle matches src
 ```
 
-Validate repository-owned orchestration skills with Codex's official
-validator:
+After rebuilding, copy `dist/application-gateway-cli.bundle.mjs` to
+`controller/.orchestrator/runtime/application-gateway-cli.mjs`: the template
+must run the same bytes the tests checked.
 
-```powershell
-$validator = ".project-runtime\codex-home\skills\.system\skill-creator\scripts\quick_validate.py"
-.\.venv\Scripts\python.exe $validator ".agents\skills\execute-orchestrated-task"
-.\.venv\Scripts\python.exe $validator "orchestrator\coordination-kit\controller\.agents\skills\review-child-report"
-.\.venv\Scripts\python.exe $validator "orchestrator\coordination-kit\controller\.agents\skills\write-bounded-source-patch"
-.\.venv\Scripts\python.exe $validator "orchestrator\coordination-kit\controller\.agents\skills\handle-coordination-incident"
-```
+## Change discipline
 
-## Change Discipline
-
-- preserve official provider ownership;
-- keep coordinator intent separate from child-owned implementation choices;
-- keep full chat history and reasoning traces out of orchestration records;
-- fail closed before implementation when the current plan lacks explicit user
-  confirmation, and reread the bounded workflow rules at required checkpoints;
-- update component docs, versions, changelog, schemas, and tests together;
-- use `gpt-5.6-sol` with reasoning effort `max` and denied fallback for every
-  orchestrator-development corrective task; fail closed if unavailable;
-- record start identity, bounded progress, and completion evidence through the
-  existing task/progress/report contracts rather than a duplicate diary;
-- build a new immutable patch for delivery changes;
-- use `$write-bounded-source-patch` for every manual Windows controller source
-  or durable documentation edit;
-- never edit historical task, report, decision, or patch artifacts in place.
+- Keep conversation text, reasoning and provider history out of the
+  Gateway's records: journals and receipts carry identities, hashes and
+  bounded status, not content.
+- Every write is an operation with an identity and a receipt; an uncertain
+  outcome is reconciled, never resent.
+- Agents act inside their write zones and permission modes; never widen them
+  from the backend without the person's confirmation in Atlas.
+- Change docs, versions, `CHANGELOG.md`, schemas and tests together.
+- Never edit a delivered task packet, an imported report or an acceptance in
+  place; a changed scope is a new task.
+- Tests use fakes (a fake Claude Agent SDK, fixture controllers). Never start
+  a real Claude session or spend quota from a test.

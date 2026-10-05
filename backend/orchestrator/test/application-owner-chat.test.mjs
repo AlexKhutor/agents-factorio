@@ -19,7 +19,7 @@ const NOW = "2026-09-05T09:30:00.000Z";
 const SOURCE = "sample-app-development";
 const THREAD = "11111111-1111-4111-8111-111111111111";
 const PROFILE = Object.freeze({
-  model: "gpt-5.6-sol", reasoningEffort: "max", fallbackPolicy: "deny",
+  model: "example-model-max", reasoningEffort: "max", fallbackPolicy: "deny",
 });
 
 function fingerprint(workspacePath) {
@@ -76,7 +76,7 @@ class FakeClient extends EventEmitter {
   async listModels() {
     return { data: [{
       id: PROFILE.model,
-      displayName: "GPT-5.6 Sol",
+      displayName: "Example Model Max",
       supportedReasoningEfforts: [{ reasoningEffort: PROFILE.reasoningEffort }],
       defaultReasoningEffort: PROFILE.reasoningEffort,
     }], nextCursor: null };

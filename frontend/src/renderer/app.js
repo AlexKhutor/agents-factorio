@@ -2528,13 +2528,13 @@ function renderProfileFields(box, failure) {
   const onDirect = atlasState.info?.mode === "direct";
   const onPaperclip = atlasState.info?.mode === "paperclip" || onDirect;
   const provider = el("input");
-  provider.value = onPaperclip ? "claude" : "codex";
+  provider.value = "claude";
   provider.placeholder = "provider";
   const model = el("input");
-  model.value = onPaperclip ? "claude-sonnet-5" : "gpt-5.6-sol";
+  model.value = onPaperclip ? "claude-sonnet-5" : "claude-sonnet-5-5";
   model.placeholder = "model";
   const effort = el("input");
-  effort.value = onPaperclip ? "default" : "max";
+  effort.value = "default";
   effort.placeholder = "effort";
   box.replaceChildren(
     el("div", "section-title", onPaperclip ? "Profile: provider, model, effort" : "Profile from the catalog"),

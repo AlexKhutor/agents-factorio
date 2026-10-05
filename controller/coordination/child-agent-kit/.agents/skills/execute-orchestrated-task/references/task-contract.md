@@ -40,12 +40,15 @@ the controller before dispatch:
 
 ```json
 {
-  "provider": "openai",
-  "model": "gpt-5.6-terra",
+  "provider": "anthropic",
+  "model": "claude-sonnet-5-5",
   "reasoningEffort": "medium",
   "fallbackPolicy": "deny"
 }
 ```
+
+The provider is the one of the child's route: `anthropic` for a Claude Code
+desk agent, `openai` for a Codex child.
 
 This field controls the provider turn, not the child's implementation choices.
 The managed router validates and applies it before prompt submission. The
@@ -53,10 +56,11 @@ child must not replace it, request a silent fallback, or treat its own UI
 default as authoritative. Provider-observed model/effort is controller
 telemetry and a mismatch is reported as an orchestration incident.
 
-An incident-repair task targeting `orchestrator-development` has the fixed
-profile `gpt-5.6-sol` / `max` / `fallbackPolicy=deny`. The router validates the
-exact pair against the current catalog. Unavailability blocks the task; it
-does not authorize a fallback.
+An incident-repair task targeting `orchestrator-development` carries the
+exact profile the controller fixed for incident repair, with
+`fallbackPolicy=deny`. The router validates the exact pair against the
+current catalog. Unavailability blocks the task; it does not authorize a
+fallback.
 
 Corrective work records start and completion through the existing task,
 progress, changelog, version, and immutable report artifacts. Durable source,

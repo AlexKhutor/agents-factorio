@@ -1,142 +1,95 @@
-# Orchestrator Architecture Boundary
+# Architecture
 
-## Ownership
-
-The target reuses official owners and adds a narrow private workflow layer
-above the stable isolation pipeline:
-
-The canonical per-fact and per-command assignments are maintained in
-[authority-matrix.md](authority-matrix.md); the list below is a compact
-architecture overview, not an alternate authority table.
+Agents Factorio has three parts. Each one owns a clear piece of the system,
+and they talk only through versioned contracts.
 
 ```text
-VS Code Agent Host/AHP  -> frozen read-only protocol/capability probe
-Codex App Server        -> Codex threads, turns, subagents, history, interrupt
-OpenAI Codex VS Code UI -> visible child owner-thread execution
-Git/Markdown            -> immutable tasks, reports, acceptances, decisions
-serialized queue        -> deterministic lifecycle and optional review order
-controller wake observer -> model-free signal discovery and exact-chat resume
-review service home     -> summaries, review threads, and raw diagnostics
-managed child adapter   -> isolated launcher lease and exact Codex thread/PID
-context preparation     -> planned provider usage gate and same-thread compact
-SampleApp                 -> spatial presentation and input
+ Atlas (Electron)                        project folders (git, write zones)
+   trusted host ── confirmations             ▲
+   renderer: map · chats · memory            │ Claude Code tools (Read, Edit, Bash, ...)
+        │ loopback HTTP + events             │
+        ▼                                    │
+ Application Gateway (one Node.js process) ──┘
+   Claude Agent SDK sessions · operations · receipts · journal
+   memory service · attention · usage meter · per-turn commits
+        │
+        ▼
+ Controller instance (a folder)
+   .project-local/  memory and archive databases (SQLite), sessions, token
+   coordination/    immutable task packets, acceptances, reviews
+   knowledge/       imported reports and their catalog
+   tools/           Gateway lifecycle, task dispatch, report collection
 ```
 
-The earlier secondary-App-Server daemon, registry, worktree manager, dashboard,
-and HTTP broker remain a frozen tested prototype. New coordination code must
-not make that prototype a second provider history or session owner. The current
-SQLite workflow state is rebuildable under `.project-local/orchestration/`;
-durable authority stays in Git-backed task, report, and decision artifacts.
+## Application Gateway
 
-The controller's user-facing Codex history and automatic reviewer history use
-different machine-local `CODEX_HOME` directories. The backend keeps a bounded
-diagnostic index linking a service run to its task, report, decision, versions,
-summary, problems, and raw rollout hash. It does not copy the transcript into
-the operational projection. See `service-review-diagnostics.md`.
+`backend/orchestrator/src`, built into one bundle
+(`dist/application-gateway-cli.bundle.mjs`, installed as
+`controller/.orchestrator/runtime/application-gateway-cli.mjs`). It has no
+runtime npm dependencies; the Claude Agent SDK is loaded from the path in the
+controller's `claude-provider.json`.
 
-Each projected agent may also carry bounded provider-neutral statistics. Live
-App Server token events, a provider-supplied terminal cost estimate, and the
-exact managed child rollout are normalized without copying conversation text.
-Statistics remain telemetry, not authority or billing truth. See
-`agent-statistics.md`.
+- **Agents as Claude Code sessions.** Every agent is one Claude Code session
+  hosted through the Claude Agent SDK (`claude-code-session-host.mjs`): a turn
+  per message, steering a running turn, interrupting, questions with options,
+  thinking and tool calls in the conversation. See
+  [claude-code-provider.md](claude-code-provider.md).
+- **Memory.** Project, quarter and per-agent memory live in a SQLite store
+  (`project-memory-store.py`), are delivered with a turn only when they
+  changed, and are written only after the person approves the exact text. See
+  [project-memory.md](project-memory.md).
+- **Rights.** Each agent has a write zone (glob patterns in its project
+  folder), enforced by a pre-tool hook in every permission mode (manual,
+  accept edits, auto, bypass). A project lead may change the whole folder, a
+  quarter lead the zones of its quarter.
+- **History.** A turn that changed files becomes one git commit by that agent,
+  with only that turn's files.
+- **Operations.** Reads and writes are typed operations over a loopback-only
+  HTTP API with a bearer token. Every write has an identity and a receipt; an
+  uncertain outcome is reconciled, never resent blindly. See
+  [application-gateway-operations.md](application-gateway-operations.md) and
+  [application-gateway-security.md](application-gateway-security.md).
+- **Attention.** Turns that finished unseen, questions waiting for an answer
+  and problems are folded per agent, quarter, project and world. See
+  [attention-model.md](attention-model.md).
+- **Lifecycle.** `tools/application_gateway.ps1` starts, inspects and stops
+  the Gateway and keeps a small monitor window open while it runs. See
+  [application-gateway-lifecycle.md](application-gateway-lifecycle.md).
 
-Presentation clients discover that operational surface through the versioned
-read-only Backend Consumer API. Its descriptor names the projections, schemas,
-queries, consistency rules, timing, and current command-surface availability.
-The reference client validates and selects one coherent factual/attention pair
-without exposing SQLite or provider history. See `backend-consumer-api.md`.
+The Gateway also keeps a provider for the Codex App Server from earlier
+versions (`-Provider codex`); Claude Code is the default and the one Atlas is
+built for.
 
-New feature work follows the versioned intent-confirmation lifecycle in
-`intent-confirmation-workflow.md`. The coordinator owns confirmed intent and
-cross-project outcomes; the child owner proposes the technical plan. A
-plan-bound user approval opens implementation. Neither a coordinator prompt nor
-a fresh backend heartbeat is evidence that implementation was authorized.
+## Controller
 
-The same controller planning step also selects the complete return contract:
-the report operation and the post-wake continuation policy. The user confirms
-that choice before dispatch. A wake signal never chooses policy, and
-deterministic acceptance alone never authorizes new work. Automatic
-continuation may reference only the same confirmed controller-plan revision;
-without a supported persisted policy the controller stops after the bounded
-wake turn.
+A folder the Gateway works for, copied from the `controller/` template. It
+holds everything that belongs to one installation: the memory and archive
+databases, Claude Code sessions, the Gateway's descriptor and token (all under
+the machine-local `.project-local/`), and the task workflow.
 
-## Evolution Boundary
+**Tasks that can be checked.** A coordinator agent hands work to desk agents
+as immutable task packets (`tools/dispatch_child_task.ps1`). The desk agent
+accepts the packet, publishes a plan, reports progress and submits a report
+through tools of its task kit; the control cycle (`control-cli.mjs`) imports
+the report and accepts it deterministically, by code, before any model reads
+it. A delivered packet is not an accepted task, and a submitted report is not
+accepted work.
 
-The confirmed staged direction is defined in the
-`integration-first-refactor-master-plan.md` ordering authority and its bound
-Part 1 and Part 2 checklists. The current evidence-backed status is maintained
-in `integration-first-refactor-component-stage-matrix.md`.
+## Atlas
 
-`next-architecture-improvements.md` is retained as the historical predecessor
-and source rationale only. Its old versions, stage numbering, and current-state
-claims no longer authorize work.
+`frontend/`, an Electron app with no UI framework.
 
-The confirmed direction preserves this ownership model while adding these
-bounded changes:
+- **Trusted host** (`src/host`): reads the Gateway's descriptor, runs the
+  Gateway CLI for trusted actions, and shows its own confirmation window for
+  anything irreversible (archiving, binding a folder, writing memory, the
+  bypass permission mode, `git init`). The page cannot confirm for the person.
+- **Renderer** (`src/renderer`): the strategy map (World → Project → Quarter →
+  Agent), the agent workspace (conversation, trace, files, memory, skills),
+  attention lists and the plan usage menu.
+- **Frontend kit** (`vendor/frontend-kit`): the backend's contract for the
+  frontend - schemas, client, fixtures - accepted as a delivery and verified
+  by SHA-256 before anything is loaded. See
+  [application-frontend-kit.md](application-frontend-kit.md) and
+  [application-contract.md](application-contract.md).
 
-1. report availability, deterministic acceptance, direct display,
-   summarization, and optional formal review become distinct operations;
-2. active workflow events gain bounded causal identity;
-3. each task gains a compact rebuildable workflow checkpoint;
-4. child sources advertise provider-neutral capabilities and decision
-   provenance;
-5. a managed existing thread is measured and, when policy requires it,
-   compacted before task delivery through the provider-owned Codex path.
-
-Report operations implement item 1: the wake binding selects `accept`, `show`,
-`summarize`, `review`, or `import-only`; normal acceptance is deterministic and
-model-free. Continuation support is partial pending the integrity and deployed
-observer gaps recorded by M0. Causal and capability foundations are partial;
-the rebuildable checkpoint and provider context preparation remain planned;
-sandbox work remains deferred. See `report-operations.md` for the implemented
-boundary and the confirmed master plan for remaining work and gates.
-
-The controller wake observer is a delivery adapter, not a second control
-plane. It continuously discovers immutable child wake signals, verifies them,
-serializes the selected report operation, and submits one bounded continuation
-prompt to the exact managed controller Codex thread. Because VS Code already
-owns that open thread, live delivery uses the exact-PID Codex UI adapter rather
-than attaching a second App Server writer. See `controller-wake-observer.md`.
-
-## Managed Child Boundary
-
-The managed child adapter never invokes generic `code` or `Code.exe`. It calls
-the child source's registered `tools/open_isolated_vscode.ps1`, verifies that
-project's `.project-runtime` paths and launch report, and rejects a live runtime
-opened outside the controller.
-
-After launch it opens the exact OpenAI Codex thread by deep link, confirms the
-route in the extension log, and uses Windows UI Automation only inside
-lease-recorded PIDs. Prompt bodies and provider history are never logged or
-persisted by the controller.
-
-The planned context-preparation gate sits between exact thread selection and
-task submission. It reads bounded provider token usage, calibrates occupancy
-against the operator-visible VS Code indicator, and conditionally invokes the
-official same-thread compaction operation while idle. It does not scrape the
-indicator, rewrite rollout history, or let a second writer race the Codex UI.
-The initial policy is advisory at 60% and requires compaction at 75%, subject
-to the supervised Stage 4 calibration. This behavior is not implemented in
-the current runtime.
-
-Visible child interruption is a controller workflow signal, not provider
-history. The adapter persists its own stop intent before invoking Stop. An
-unmatched terminal interruption in the exact managed turn becomes a bounded
-`awaiting_operator` record until an explicit resume or cancel decision. Cancel
-delivers the normal cooperative child-task sentinel before clearing the chat
-binding; a failed delivery keeps the intervention unresolved.
-
-## Current Deployment Boundary
-
-The proof of concept is machine-local, not window-global. Multiple registered
-child environments and managed VS Code runtimes may coexist on the same
-machine, and one runtime may expose multiple editor windows and Codex sessions.
-The lease scopes ownership to a source runtime process set.
-
-Remote discovery, cross-PC lease transfer, and distributed task transport are
-deferred until this local workflow is proven live.
-
-This layer is intentionally outside `VsCodeIsolate/`. It may be merged or
-extracted only after serialized queue recovery, stop semantics, official Agent
-Host/AHP conformance, live Codex App Server review, and VR projection handling
-have been validated.
+Atlas never reads Claude credentials and never starts the Gateway itself.

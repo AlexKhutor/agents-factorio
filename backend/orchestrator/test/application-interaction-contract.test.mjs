@@ -183,7 +183,7 @@ test("portable interaction schemas accept canonical output", async () => {
   );
   const responseValue = response(value);
   assert.equal(validateResponse(responseValue), true, JSON.stringify(validateResponse.errors));
-  assert.equal(validateResponse({ ...responseValue, model: "gpt-5.6-sol" }), false);
+  assert.equal(validateResponse({ ...responseValue, model: "example-model-max" }), false);
   const validateStatus = ajv.getSchema(
     "https://isolate-vscode.local/schemas/application-interaction-status.v0.1.0.json",
   );

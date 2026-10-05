@@ -134,11 +134,11 @@ let sendIdentity = null;
 {
   const orphan = await mutations.createAgent({
     agentId: "atlas-test-agent", projectId: "platform-core", quarterId: "core-q9",
-    profile: { provider: "codex", model: "gpt-5.6-sol", reasoningEffort: "max" },
+    profile: { provider: "codex", model: "example-model-max", reasoningEffort: "max" },
   });
   const created = await mutations.createAgent({
     agentId: "atlas-test-agent", projectId: "platform-core", quarterId: "core-q2",
-    profile: { provider: "codex", model: "gpt-5.6-sol", reasoningEffort: "max" },
+    profile: { provider: "codex", model: "example-model-max", reasoningEffort: "max" },
   });
   check("agent-creation-requires-both-memories",
     orphan.ok === false

@@ -11,7 +11,7 @@ const AT = "2026-08-30T12:00:00.000Z";
 const MODEL_DERIVATION = Object.freeze({
   kind: "model-derived",
   provider: "openai",
-  model: "gpt-5.6-sol",
+  model: "example-model-max",
   reasoningEffort: "max",
 });
 
@@ -79,7 +79,7 @@ test("legacy, source, deterministic, and model-derived worker summaries remain v
 test("model-derived claims require a closed bounded profile without prompt or reasoning", async () => {
   const validateSchema = await schemaValidator("worker-progress.schema.json");
   const invalid = [
-    { kind: "model-derived", provider: "openai", model: "gpt-5.6-sol" },
+    { kind: "model-derived", provider: "openai", model: "example-model-max" },
     { ...MODEL_DERIVATION, prompt: "PRIVATE_PROMPT_MARKER" },
     { ...MODEL_DERIVATION, reasoning: "PRIVATE_REASONING_MARKER" },
     { ...MODEL_DERIVATION, model: "m".repeat(129) },

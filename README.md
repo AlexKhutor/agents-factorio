@@ -175,14 +175,11 @@ Atlas's suites use fixture data and a fake Gateway.
 
 Agents Factorio keeps evolving: it is developed together with the work it is
 used for, and improvements land here regularly ([CHANGELOG.md](CHANGELOG.md)).
-Next on the list:
-
-- registering desk agents and the coordinator role from Atlas (today: the CLI);
-- a demo video and a step-by-step first-run guide;
-- fewer manual steps between `git clone` and the first agent turn;
-- macOS and Linux support for the PowerShell tools (under consideration).
-
-Ideas and bug reports are welcome in [Issues](https://github.com/AlexKhutor/agents-factorio/issues).
+Next: **Codex CLI agents** next to Claude Code ones, **local agents and
+harnesses** (DeepSeek-based harnesses, Hermes, Qoder and other local
+solutions), desk agents managed from Atlas, and a faster first run. The full
+list is in [ROADMAP.md](ROADMAP.md); ideas and bug reports are welcome in
+[Issues](https://github.com/AlexKhutor/agents-factorio/issues).
 
 ## License
 

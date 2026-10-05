@@ -1,6 +1,6 @@
 ---
 name: execute-orchestrated-task
-description: Accept, execute, and report a bounded task delivered by Agents_Factorio_Control through `.orchestrator/tasks/inbox`. Use when a child-project Codex agent is asked to process a pending orchestrator task, enforce the project's responsibility boundary, stop and report an unexpected foreign bug, coordinate task-specific subagents, or submit a completion, blocked, or failed report.
+description: Accept, execute, and report a bounded task delivered by Agents_Factorio_Control through `.orchestrator/tasks/inbox`. Use when a child-project agent (Claude Code or Codex) is asked to process a pending orchestrator task, enforce the project's responsibility boundary, stop and report an unexpected foreign bug, coordinate task-specific subagents, or submit a completion, blocked, or failed report.
 ---
 
 # Execute Orchestrated Task
@@ -18,9 +18,10 @@ Process one immutable task without taking ownership of another subsystem.
    merely because a packet exists.
 2. Read [task-contract.md](references/task-contract.md) and every path in
    `requiredReading`.
-   Before acknowledging the task, run
-   `tools\check_codex_quota_reserve.bat`. Continue only on exit `0` / status
-   `proceed`. Status `stop` or `unavailable` means no task acceptance or new
+   Before acknowledging the task, check the provider's quota gate when this
+   workspace has one (a Codex child: `tools\check_codex_quota_reserve.bat`;
+   a Claude Code desk agent: the Gateway's plan usage). Continue only on
+   `proceed`. `stop` or `unavailable` means no task acceptance or new
    operation; preserve bounded state and report the quota gate to the user.
 3. Resolve the task intent and authority model:
    - for v0.3.0, read `intent`, `intentConfirmation`, `desiredOutcomes`,
@@ -30,14 +31,14 @@ Process one immutable task without taking ownership of another subsystem.
      `responsibilityBoundary`, `forbiddenPaths`, and `executionAuthority`;
    - for legacy v0.1.0, treat `objective` as intent, `acceptanceCriteria` as
      requested outcomes, and `allowedPaths` only as a maximum safety ceiling.
-   If v0.2/v0.3 includes `executionProfile`, verify that it uses provider
-   `openai` and `fallbackPolicy=deny`. The controller-managed router already
-   selected that model and effort before this turn; record it as task context
-   but never change or reinterpret it from inside the child task.
-   When this workspace is `orchestrator-development` and the task repairs an
-   orchestrator incident, require `model=gpt-5.6-sol`,
-   `reasoningEffort=max`, and `fallbackPolicy=deny`. Reject or block a task
-   that requests another profile; never downgrade silently.
+   If v0.2/v0.3 includes `executionProfile`, verify that its provider is the
+   one this workspace's route runs on (`anthropic` for a Claude Code desk
+   agent, `openai` for a Codex child) and that `fallbackPolicy=deny`. The
+   controller selected that model and effort before this turn; record it as
+   task context but never change or reinterpret it from inside the child task.
+   A task that repairs an orchestrator incident carries the exact profile the
+   controller fixed for incident repair; reject or block a task that requests
+   another profile, and never downgrade silently.
    Confirm that the intent belongs to this workspace. Never treat a proposed
    mechanism or example path as mandatory unless it is an explicit owner,
    safety, or compatibility requirement.
@@ -162,9 +163,10 @@ Process one immutable task without taking ownership of another subsystem.
 - Reread and record the workflow rules at task start, context recovery,
   pre-implementation, material plan change, delegation, and pre-completion.
 - At those checkpoints, before every new long-running operation, and before
-  every controlled compaction, run `tools\check_codex_quota_reserve.bat`.
-  Stop fail-closed on exit `20`, `21`, or `22`. After provider-controlled
-  automatic compaction, make this the first tool call before continuing.
+  every controlled compaction, check the quota gate again (a Codex child:
+  `tools\check_codex_quota_reserve.bat`, stop fail-closed on exit `20`, `21`
+  or `22`). After provider-controlled automatic compaction, make this the
+  first check before continuing.
 - Never report tests that were not run.
 - Never make cross-project acceptance decisions; request them in the report.
 - Never repair another workspace, application layer, or imported tool because

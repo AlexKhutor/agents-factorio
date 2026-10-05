@@ -140,7 +140,7 @@ function agentDto(state = "active") {
     quarterId: "quarter-1",
     operationId: "create-agent-1",
     profile: {
-      provider: "openai", model: "gpt-5.6-sol", reasoningEffort: "max",
+      provider: "openai", model: "example-model-max", reasoningEffort: "max",
       fallbackPolicy: "deny",
     },
     state,
@@ -236,7 +236,7 @@ function validInputs() {
       agentId: "agent-1", projectId: "project-1", quarterId: "quarter-1",
       operationId: "create-agent-1",
       profile: {
-        provider: "openai", model: "gpt-5.6-sol", reasoningEffort: "max",
+        provider: "openai", model: "example-model-max", reasoningEffort: "max",
         fallbackPolicy: "deny",
       },
     }],

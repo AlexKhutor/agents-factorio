@@ -1,5 +1,12 @@
 # Application Events
 
+> **Reference contract.** Written while the project ran its agents on the Codex App Server,
+> and it keeps that era's internal milestone names (A1-A12, release programs, Frontend Kit
+> versions) and links to internal reports that are not part of this repository. The contract
+> itself still holds: the Claude Code provider presents its sessions in the same shape, so it
+> applies to both providers. Start with [architecture.md](architecture.md) and
+> [claude-code-provider.md](claude-code-provider.md).
+
 ## Scope
 
 - Own-UI milestone: A8.

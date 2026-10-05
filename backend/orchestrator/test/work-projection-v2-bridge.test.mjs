@@ -276,7 +276,7 @@ test("model-derived summary text carries provider authority and bounded provenan
   const derivation = {
     kind: "model-derived",
     provider: "openai",
-    model: "gpt-5.6-sol",
+    model: "example-model-max",
     reasoningEffort: "max",
   };
   const projection = translate(snapshots({ summaryProvenance: derivation }));
@@ -292,7 +292,7 @@ test("model-derived summary text carries provider authority and bounded provenan
       schemaVersion: 1,
       authorityType: "provider",
       sourceId: "openai",
-      externalId: "gpt-5.6-sol",
+      externalId: "example-model-max",
       contractVersion: "v0.1.0",
     });
     assert.deepEqual(ownership.selectedAuthority, ownership.expectedAuthority);
@@ -313,11 +313,11 @@ test("model-derived summary claims fail closed without exact private-safe proven
   const base = {
     kind: "model-derived",
     provider: "openai",
-    model: "gpt-5.6-sol",
+    model: "example-model-max",
     reasoningEffort: "max",
   };
   const invalid = [
-    { kind: "model-derived", provider: "openai", model: "gpt-5.6-sol" },
+    { kind: "model-derived", provider: "openai", model: "example-model-max" },
     { ...base, prompt: "PRIVATE_PROMPT_MARKER" },
     { ...base, reasoning: "PRIVATE_REASONING_MARKER" },
     { ...base, model: "m".repeat(129) },

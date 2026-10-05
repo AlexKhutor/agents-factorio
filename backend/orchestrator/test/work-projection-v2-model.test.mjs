@@ -337,7 +337,7 @@ test("model-derived provenance requires its exact bounded provider authority", (
   const derivation = {
     kind: "model-derived",
     provider: "openai",
-    model: "gpt-5.6-sol",
+    model: "example-model-max",
     reasoningEffort: "max",
   };
   const provider = authority("provider", derivation.provider, derivation.model);
@@ -415,13 +415,13 @@ test("the strict v2 schema validates normalized output without changing v1", asy
   assert.equal(validate(projection), true, JSON.stringify(validate.errors));
   const derived = candidate();
   const derivedOwnership = derived.layers.authority.find((item) => item.factId === "work-state");
-  const derivedAuthority = authority("provider", "openai", "gpt-5.6-sol");
+  const derivedAuthority = authority("provider", "openai", "example-model-max");
   derivedOwnership.expectedAuthority = derivedAuthority;
   derivedOwnership.selectedAuthority = derivedAuthority;
   derivedOwnership.provenance.derivation = {
     kind: "model-derived",
     provider: "openai",
-    model: "gpt-5.6-sol",
+    model: "example-model-max",
     reasoningEffort: "max",
   };
   const derivedProjection = buildWorkProjectionV2(derived);

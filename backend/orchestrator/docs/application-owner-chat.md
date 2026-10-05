@@ -1,5 +1,10 @@
 # Application Owner Chat
 
+> **Codex App Server provider only.** The owner chat with one child Codex conversation is kept
+> from the project's earlier era (`-Provider codex`). With the Claude Code provider, agents' chats
+> go through the Gateway's agent operations - see [claude-code-provider.md](claude-code-provider.md).
+> Links to internal reports of that era are not part of this repository.
+
 Status: source implementation `v0.3.0`, public/schema contract `v0.2.0`, for
 one explicitly selected child Codex conversation. It is renderer-neutral and
 does not prescribe SampleApp presentation.

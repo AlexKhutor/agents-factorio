@@ -1,4 +1,0 @@
-interface:
-  display_name: "Review Child Report"
-  short_description: "Review one serialized child report"
-  default_prompt: "Review only the named child report. Before long review, require the separate visible status shell; enforce owner boundaries and defer with a bounded bug report instead of fixing another subsystem."

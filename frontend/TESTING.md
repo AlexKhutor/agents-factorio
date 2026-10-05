@@ -69,7 +69,7 @@ synthetic.
 | 12a | Change the project memory and press "Close without saving" | The first press warns, the second closes and discards the edits. The same in quarter memory |
 | 13 | Save again without re-reading the memory | A revision conflict: nothing is overwritten, re-reading is offered |
 | 14 | Right click on an empty spot → "Create project…" | The project is created by a backend operation and only then appears on the map |
-| 15 | Right click on a quarter → "Create agent…" | Profile `codex` / `gpt-5.6-sol` / `max`; the agent appears with delivery `pending` |
+| 15 | Right click on a quarter → "Create agent…" | Profile `claude` / `claude-sonnet-5-5` / `default`; the agent appears with delivery `pending` |
 | 16 | Select `data-ingest-2` → "Workspace" → type a text → "Send" | Outcome `accepted` and an operation id; "Operation receipt" shows the state |
 | 17 | Select `core-scheduler-2` and send | The outcome is **uncertain**. No retry is offered — only the receipt. This is the main case |
 | 18 | Start typing a text and, without sending it, close the workspace | The draft is kept and marked as local; it is never sent by itself |
@@ -126,12 +126,12 @@ the controller root (`<controller-root>`, an instance copied from
 ```powershell
 tools\stop_application_gateway.bat -AsJson
 tools\close_application_gateway_monitor.bat -AsJson
-tools\start_orchestrator_backend.bat -AsJson
+tools\start_application_gateway.bat
 tools\application_gateway_status.bat -AsJson
 ```
 
-`start_orchestrator_backend.bat` starts the Codex provider by default; add
-`-Provider claude` to run the agents on Claude Code.
+`start_application_gateway.bat` starts the Gateway with the Claude Code
+provider.
 
 Keep the monitor open. A session lives for **one hour** and is not extended:
 plan the check so that it fits, otherwise the window will honestly show
@@ -166,8 +166,7 @@ The first live operations go in this order, because the contract requires it:
    memories are created empty.
 3. **Create an agent** with a profile from the catalog. An unknown profile is
    refused.
-4. **Send.** This is a real provider turn (Codex or Claude Code, whichever the
-   Gateway runs) and it spends quota. If the quota reserve is running out, the
+4. **Send.** This is a real Claude Code turn and it spends your plan's quota. If the quota reserve is running out, the
    send is refused — that is the correct behaviour, not a client error.
 5. Turn **live view** on and watch the last operation and its receipt. While
    the turn is running, do not send a second time.

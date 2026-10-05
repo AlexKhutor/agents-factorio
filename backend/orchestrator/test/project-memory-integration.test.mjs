@@ -16,7 +16,7 @@ import { createApplicationGatewayReadRuntime } from "../src/application-gateway-
 const sourceId = "memory-integration";
 const profile = {
   provider: "fixture",
-  model: "gpt-5.6-sol",
+  model: "example-model-max",
   reasoningEffort: "max",
   fallbackPolicy: "deny",
 };
