@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/work-authority-projection.v0.1.0.json",
+  "title": "Renderer-Neutral Work Authority Projection v0.1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "contractVersion",
+    "projectionId",
+    "sequence",
+    "generatedAtUtc",
+    "fields"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "projectionId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "sequence": { "type": "integer", "minimum": 0 },
+    "generatedAtUtc": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$",
+      "maxLength": 64
+    },
+    "source": { "$ref": "external-reference.schema.json" },
+    "fields": {
+      "type": "array",
+      "maxItems": 256,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["fieldId", "ownership", "reconciliation"],
+        "properties": {
+          "fieldId": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_.-]{0,159}$"
+          },
+          "ownership": { "$ref": "#/$defs/ownership" },
+          "reconciliation": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "eventId",
+              "eventSha256",
+              "provenanceSha256"
+            ],
+            "properties": {
+              "eventId": {
+                "type": "string",
+                "pattern": "^authority-reconciliation-[a-f0-9]{64}$"
+              },
+              "eventSha256": { "$ref": "#/$defs/sha256" },
+              "provenanceSha256": { "$ref": "#/$defs/sha256" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "freshness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "ageSeconds", "staleAfterSeconds"],
+      "properties": {
+        "status": { "enum": ["fresh", "stale", "unknown"] },
+        "ageSeconds": { "type": ["integer", "null"], "minimum": 0 },
+        "staleAfterSeconds": { "type": ["integer", "null"], "minimum": 0 }
+      }
+    },
+    "lastKnownGood": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["observedAtUtc", "authority", "valueSha256", "evidenceRefs"],
+      "properties": {
+        "observedAtUtc": { "type": "string", "format": "date-time", "pattern": "Z$", "maxLength": 64 },
+        "authority": { "$ref": "authority-reference.schema.json" },
+        "valueSha256": { "$ref": "#/$defs/sha256" },
+        "evidenceRefs": {
+          "type": "array",
+          "maxItems": 32,
+          "items": { "$ref": "external-reference.schema.json" }
+        }
+      }
+    },
+    "ownership": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "authority", "observedAtUtc", "freshness", "evidenceRefs"],
+      "properties": {
+        "status": {
+          "enum": ["current", "stale", "unavailable", "unsupported", "unknown", "contradictory", "authority-mismatch", "ambiguous"]
+        },
+        "authority": { "$ref": "authority-reference.schema.json" },
+        "valueSha256": { "$ref": "#/$defs/sha256" },
+        "occurredAtUtc": { "type": "string", "format": "date-time", "pattern": "Z$", "maxLength": 64 },
+        "observedAtUtc": { "type": "string", "format": "date-time", "pattern": "Z$", "maxLength": 64 },
+        "publishedAtUtc": { "type": "string", "format": "date-time", "pattern": "Z$", "maxLength": 64 },
+        "heartbeatAtUtc": { "type": "string", "format": "date-time", "pattern": "Z$", "maxLength": 64 },
+        "freshness": { "$ref": "#/$defs/freshness" },
+        "evidenceRefs": {
+          "type": "array",
+          "maxItems": 32,
+          "items": { "$ref": "external-reference.schema.json" }
+        },
+        "conflict": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["reasonCode", "authorities"],
+          "properties": {
+            "reasonCode": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,63}$" },
+            "authorities": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 8,
+              "items": { "$ref": "authority-reference.schema.json" }
+            }
+          }
+        },
+        "lastKnownGood": { "$ref": "#/$defs/lastKnownGood" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "status": { "enum": ["current", "stale"] } },
+            "required": ["status"]
+          },
+          "then": { "required": ["valueSha256"] },
+          "else": { "not": { "required": ["valueSha256"] } }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": ["contradictory", "authority-mismatch", "ambiguous"]
+              }
+            },
+            "required": ["status"]
+          },
+          "then": { "required": ["conflict"] },
+          "else": { "not": { "required": ["conflict"] } }
+        }
+      ]
+    }
+  }
+}

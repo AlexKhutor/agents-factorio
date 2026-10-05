@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/application-provider-interaction.v1.json",
+  "title": "Application Provider Interaction v0.1.0",
+  "oneOf": [
+    { "$ref": "#/$defs/readResult" },
+    { "$ref": "#/$defs/responseResult" }
+  ],
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "utc": { "type": "string", "format": "date-time", "pattern": "Z$", "maxLength": 64 },
+    "provider": {
+      "type": "object", "additionalProperties": false,
+      "required": ["adapterId", "adapterVersion", "sourceId", "runtimeInstanceId"],
+      "properties": {
+        "adapterId": { "$ref": "#/$defs/id" }, "adapterVersion": { "$ref": "#/$defs/id" },
+        "sourceId": { "$ref": "#/$defs/id" }, "runtimeInstanceId": { "$ref": "#/$defs/id" }
+      }
+    },
+    "providerRequest": {
+      "type": "object", "additionalProperties": false,
+      "required": ["method", "requestId", "requestIdType", "generation", "threadId", "turnId", "itemId", "requestSha256"],
+      "properties": {
+        "method": { "enum": ["item/commandExecution/requestApproval", "item/fileChange/requestApproval", "item/tool/requestUserInput", "item/permissions/requestApproval", "mcpServer/elicitation/request"] },
+        "requestId": { "type": "string", "maxLength": 512 },
+        "requestIdType": { "enum": ["number", "string"] },
+        "generation": { "type": "integer", "minimum": 1 },
+        "threadId": { "$ref": "#/$defs/id" },
+        "turnId": { "oneOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }] },
+        "itemId": { "oneOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }] },
+        "requestSha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "display": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "title", "fields"],
+      "properties": {
+        "kind": { "enum": ["command-approval", "file-change-approval", "user-input", "permission-approval", "mcp-elicitation"] },
+        "title": { "type": "string", "maxLength": 4096 },
+        "fields": { "type": "object" }
+      }
+    },
+    "record": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "contractVersion", "interactionId", "conversationId", "provider", "providerRequest", "interactionRequest", "display", "state", "response", "providerResponseSha256", "requestedAtUtc", "deadlineAtUtc", "updatedAtUtc", "automaticRetryAllowed", "recordSha256"],
+      "properties": {
+        "schemaVersion": { "const": 1 }, "contractVersion": { "const": "v0.1.0" },
+        "interactionId": { "$ref": "#/$defs/id" },
+        "conversationId": { "type": "string", "pattern": "^conversation:[a-f0-9]{64}$" },
+        "provider": { "$ref": "#/$defs/provider" }, "providerRequest": { "$ref": "#/$defs/providerRequest" },
+        "interactionRequest": { "$ref": "https://isolate-vscode.local/schemas/application-interaction-request.v0.1.0.json" },
+        "display": { "$ref": "#/$defs/display" },
+        "state": { "enum": ["awaiting-owner", "response-recorded", "response-returned", "resolved", "expired", "stale", "uncertain"] },
+        "response": { "oneOf": [{ "$ref": "https://isolate-vscode.local/schemas/application-interaction-response.v0.1.0.json" }, { "type": "null" }] },
+        "providerResponseSha256": { "oneOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] },
+        "requestedAtUtc": { "$ref": "#/$defs/utc" }, "deadlineAtUtc": { "$ref": "#/$defs/utc" },
+        "updatedAtUtc": { "$ref": "#/$defs/utc" }, "automaticRetryAllowed": { "const": false },
+        "recordSha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "readResult": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "contractVersion", "conversationId", "sourceSequence", "records"],
+      "properties": {
+        "schemaVersion": { "const": 1 }, "contractVersion": { "const": "v0.1.0" },
+        "conversationId": { "type": "string", "pattern": "^conversation:[a-f0-9]{64}$" }, "sourceSequence": { "type": "integer", "minimum": 0 },
+        "truncated": { "type": "boolean" },
+        "omissionCount": { "type": "integer", "minimum": 0 },
+        "records": { "type": "array", "maxItems": 64, "items": { "$ref": "#/$defs/record" } }
+      }
+    },
+    "receipt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "contractVersion", "interactionId", "requestSha256", "responseSha256", "providerResponseSha256", "deliveryState", "automaticRetryAllowed"],
+      "properties": {
+        "schemaVersion": { "const": 1 }, "contractVersion": { "const": "v0.1.0" },
+        "interactionId": { "$ref": "#/$defs/id" },
+        "requestSha256": { "$ref": "#/$defs/sha256" },
+        "responseSha256": { "$ref": "#/$defs/sha256" },
+        "providerResponseSha256": { "$ref": "#/$defs/sha256" },
+        "deliveryState": { "const": "response-returned" },
+        "automaticRetryAllowed": { "const": false }
+      }
+    },
+    "responseResult": {
+      "type": "object", "additionalProperties": false,
+      "required": ["interaction", "response", "receipt"],
+      "properties": { "interaction": { "$ref": "#/$defs/record" }, "response": { "$ref": "https://isolate-vscode.local/schemas/application-interaction-response.v0.1.0.json" }, "receipt": { "$ref": "#/$defs/receipt" } }
+    }
+  }
+}

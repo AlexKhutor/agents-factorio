@@ -1,0 +1,517 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/work-projection-v2-descriptor.v2.json",
+  "title": "Work Projection v2 publication descriptor",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "contractVersion",
+    "service",
+    "status",
+    "schema",
+    "transport",
+    "handshake",
+    "artifact",
+    "sourceV1",
+    "queries",
+    "commandAdapter",
+    "freshness",
+    "limits",
+    "degradation",
+    "lastKnownGood",
+    "publicationReceipt"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 2 },
+    "contractVersion": { "const": "v0.2.0" },
+    "service": { "const": "isolate-vscode-orchestrator" },
+    "status": { "enum": ["enabled", "disabled"] },
+    "schema": { "$ref": "#/$defs/descriptorSchema" },
+    "transport": { "$ref": "#/$defs/transport" },
+    "handshake": { "$ref": "#/$defs/handshake" },
+    "artifact": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/artifact" }]
+    },
+    "sourceV1": { "$ref": "#/$defs/sourceV1" },
+    "queries": { "$ref": "#/$defs/queries" },
+    "commandAdapter": { "$ref": "#/$defs/commandAdapter" },
+    "freshness": { "$ref": "#/$defs/freshness" },
+    "limits": { "$ref": "#/$defs/limits" },
+    "degradation": { "$ref": "#/$defs/degradation" },
+    "lastKnownGood": { "$ref": "#/$defs/lastKnownGood" },
+    "publicationReceipt": { "$ref": "#/$defs/publicationReceipt" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "enabled" } } },
+      "then": {
+        "properties": {
+          "artifact": { "$ref": "#/$defs/artifact" },
+          "lastKnownGood": {
+            "type": "object",
+            "properties": { "status": { "const": "available" } }
+          },
+          "freshness": {
+            "type": "object",
+            "properties": { "status": { "enum": ["fresh", "stale"] } }
+          },
+          "handshake": {
+            "type": "object",
+            "properties": {
+              "preferred": { "const": "work-projection-v2" },
+              "contracts": {
+                "type": "array",
+                "contains": {
+                  "type": "object",
+                  "required": ["id", "status"],
+                  "properties": {
+                    "id": { "const": "work-projection-v2" },
+                    "status": { "const": "available" }
+                  }
+                }
+              }
+            }
+          },
+          "publicationReceipt": {
+            "type": "object",
+            "properties": { "kind": { "enum": ["migration", "publication"] } }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "artifact": { "type": "null" },
+          "freshness": {
+            "type": "object",
+            "properties": { "status": { "const": "unavailable" } }
+          },
+          "degradation": {
+            "type": "object",
+            "properties": { "status": { "const": "fallback" } }
+          },
+          "handshake": {
+            "type": "object",
+            "properties": {
+              "preferred": { "const": "backend-consumer-v1" },
+              "contracts": {
+                "type": "array",
+                "contains": {
+                  "type": "object",
+                  "required": ["id", "status"],
+                  "properties": {
+                    "id": { "const": "work-projection-v2" },
+                    "status": { "const": "disabled" }
+                  }
+                }
+              }
+            }
+          },
+          "publicationReceipt": {
+            "type": "object",
+            "properties": { "kind": { "const": "rollback" } }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sourceControl": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "schemaVersion", "sequence", "generatedAtUtc", "publishedAtUtc"],
+      "properties": {
+        "path": { "$ref": "#/$defs/path" },
+        "schemaVersion": { "const": 1 },
+        "sequence": { "$ref": "#/$defs/nonNegativeInteger" },
+        "generatedAtUtc": { "$ref": "#/$defs/utc" },
+        "publishedAtUtc": { "$ref": "#/$defs/utc" }
+      }
+    },
+    "sourceAttention": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path", "schemaVersion", "modelVersion", "generatedAtUtc", "controlSchemaVersion",
+        "controlSequence", "controlGeneratedAtUtc"
+      ],
+      "properties": {
+        "path": { "$ref": "#/$defs/path" },
+        "schemaVersion": { "const": 1 },
+        "modelVersion": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+        },
+        "generatedAtUtc": { "$ref": "#/$defs/utc" },
+        "controlSchemaVersion": { "const": 1 },
+        "controlSequence": { "$ref": "#/$defs/nonNegativeInteger" },
+        "controlGeneratedAtUtc": { "$ref": "#/$defs/utc" }
+      }
+    },
+    "sourceCoherence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status", "requireMatchingSequence", "requireMatchingGeneratedAtUtc",
+        "controlSequence", "attentionControlSequence"
+      ],
+      "properties": {
+        "status": { "const": "coherent" },
+        "requireMatchingSequence": { "const": true },
+        "requireMatchingGeneratedAtUtc": { "const": true },
+        "controlSequence": { "$ref": "#/$defs/nonNegativeInteger" },
+        "attentionControlSequence": { "$ref": "#/$defs/nonNegativeInteger" }
+      }
+    },
+    "sourceV1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["control", "attention", "coherence"],
+      "properties": {
+        "control": { "$ref": "#/$defs/sourceControl" },
+        "attention": { "$ref": "#/$defs/sourceAttention" },
+        "coherence": { "$ref": "#/$defs/sourceCoherence" }
+      }
+    },
+    "query": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "sourceLayers"],
+      "properties": {
+        "id": {
+          "enum": [
+            "capabilities", "overview", "work-items", "executions",
+            "attention", "artifacts", "surfaces"
+          ]
+        },
+        "sourceLayers": {
+          "type": "array",
+          "items": {
+            "enum": ["work", "execution", "artifact", "attention", "surface", "authority"]
+          },
+          "uniqueItems": true,
+          "maxItems": 4
+        }
+      },
+      "allOf": [
+        {
+          "if": { "type": "object", "properties": { "id": { "const": "capabilities" } } },
+          "then": { "type": "object", "properties": { "sourceLayers": { "const": [] } } }
+        },
+        {
+          "if": { "type": "object", "properties": { "id": { "const": "overview" } } },
+          "then": { "type": "object", "properties": { "sourceLayers": { "const": ["work", "execution", "attention", "authority"] } } }
+        },
+        {
+          "if": { "type": "object", "properties": { "id": { "const": "work-items" } } },
+          "then": { "type": "object", "properties": { "sourceLayers": { "const": ["work", "authority"] } } }
+        },
+        {
+          "if": { "type": "object", "properties": { "id": { "const": "executions" } } },
+          "then": { "type": "object", "properties": { "sourceLayers": { "const": ["execution", "authority"] } } }
+        },
+        {
+          "if": { "type": "object", "properties": { "id": { "const": "attention" } } },
+          "then": { "type": "object", "properties": { "sourceLayers": { "const": ["attention", "authority"] } } }
+        },
+        {
+          "if": { "type": "object", "properties": { "id": { "const": "artifacts" } } },
+          "then": { "type": "object", "properties": { "sourceLayers": { "const": ["artifact", "authority"] } } }
+        },
+        {
+          "if": { "type": "object", "properties": { "id": { "const": "surfaces" } } },
+          "then": { "type": "object", "properties": { "sourceLayers": { "const": ["surface", "authority"] } } }
+        }
+      ]
+    },
+    "queries": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/query" },
+      "minItems": 7,
+      "maxItems": 7,
+      "allOf": [
+        { "contains": { "type": "object", "required": ["id"], "properties": { "id": { "const": "capabilities" } } } },
+        { "contains": { "type": "object", "required": ["id"], "properties": { "id": { "const": "overview" } } } },
+        { "contains": { "type": "object", "required": ["id"], "properties": { "id": { "const": "work-items" } } } },
+        { "contains": { "type": "object", "required": ["id"], "properties": { "id": { "const": "executions" } } } },
+        { "contains": { "type": "object", "required": ["id"], "properties": { "id": { "const": "attention" } } } },
+        { "contains": { "type": "object", "required": ["id"], "properties": { "id": { "const": "artifacts" } } } },
+        { "contains": { "type": "object", "required": ["id"], "properties": { "id": { "const": "surfaces" } } } }
+      ]
+    },
+    "commandAdapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "embedded", "contractVersion", "descriptorPath", "jsonPointer"],
+      "properties": {
+        "mode": { "const": "reference" },
+        "embedded": { "const": false },
+        "contractVersion": { "const": "v0.1.0" },
+        "descriptorPath": { "$ref": "#/$defs/path" },
+        "jsonPointer": { "const": "/commandAdapter" }
+      }
+    },
+    "freshness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status", "basis", "projectionPublishedAtUtc", "evaluatedAtUtc",
+        "ageSeconds", "staleAfterSeconds"
+      ],
+      "properties": {
+        "status": { "enum": ["fresh", "stale", "unavailable"] },
+        "basis": { "enum": ["projection.publishedAtUtc", "none"] },
+        "projectionPublishedAtUtc": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/utc" }]
+        },
+        "evaluatedAtUtc": { "$ref": "#/$defs/utc" },
+        "ageSeconds": { "$ref": "#/$defs/nullableNonNegativeInteger" },
+        "staleAfterSeconds": {
+          "type": "integer",
+          "minimum": 30,
+          "maximum": 45
+        }
+      }
+    },
+    "projectionLimits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maxFactsPerLayer", "maxTotalFacts", "maxExternalRefsPerFact",
+        "maxEvidenceRefsPerFact", "maxFactValueBytes", "maxSnapshotBytes"
+      ],
+      "properties": {
+        "maxFactsPerLayer": { "const": 128 },
+        "maxTotalFacts": { "const": 512 },
+        "maxExternalRefsPerFact": { "const": 16 },
+        "maxEvidenceRefsPerFact": { "const": 16 },
+        "maxFactValueBytes": { "const": 16384 },
+        "maxSnapshotBytes": { "const": 1048576 }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["descriptorBytes", "artifactFileBytes", "receiptBytes", "queryCount", "projection"],
+      "properties": {
+        "descriptorBytes": { "const": 65536 },
+        "artifactFileBytes": { "const": 2097152 },
+        "receiptBytes": { "const": 16384 },
+        "queryCount": { "const": 7 },
+        "projection": { "$ref": "#/$defs/projectionLimits" }
+      }
+    },
+    "reasonCode": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{0,63}$"
+    },
+    "degradation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reasonCodes", "fallbackDescriptorPath", "lastKnownGoodAvailable"],
+      "properties": {
+        "status": { "enum": ["none", "degraded", "fallback"] },
+        "reasonCodes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/reasonCode" },
+          "uniqueItems": true,
+          "maxItems": 16
+        },
+        "fallbackDescriptorPath": { "$ref": "#/$defs/path" },
+        "lastKnownGoodAvailable": { "type": "boolean" }
+      }
+    },
+    "lastKnownGood": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "recordedAtUtc", "artifact"],
+      "properties": {
+        "status": { "enum": ["available", "unavailable"] },
+        "recordedAtUtc": { "$ref": "#/$defs/utc" },
+        "artifact": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/artifact" }]
+        }
+      },
+      "allOf": [
+        {
+          "if": { "type": "object", "properties": { "status": { "const": "available" } } },
+          "then": { "type": "object", "properties": { "artifact": { "$ref": "#/$defs/artifact" } } },
+          "else": { "type": "object", "properties": { "artifact": { "type": "null" } } }
+        }
+      ]
+    },
+    "publicationReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion", "kind", "outcome", "recordedAtUtc", "descriptorPath",
+        "fallbackDescriptorPath", "sequence", "projectionSha256", "artifactFileSha256",
+        "artifactByteCount", "previousProjectionSha256", "receiptId"
+      ],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "kind": { "enum": ["migration", "publication", "rollback"] },
+        "outcome": { "const": "committed" },
+        "recordedAtUtc": { "$ref": "#/$defs/utc" },
+        "descriptorPath": { "$ref": "#/$defs/path" },
+        "fallbackDescriptorPath": { "$ref": "#/$defs/path" },
+        "sequence": { "$ref": "#/$defs/nullableNonNegativeInteger" },
+        "projectionSha256": { "$ref": "#/$defs/nullableSha256" },
+        "artifactFileSha256": { "$ref": "#/$defs/nullableSha256" },
+        "artifactByteCount": { "$ref": "#/$defs/nullableNonNegativeInteger" },
+        "previousProjectionSha256": { "$ref": "#/$defs/nullableSha256" },
+        "receiptId": {
+          "type": "string",
+          "pattern": "^work-projection-v2-[a-f0-9]{64}$"
+        }
+      }
+    },
+    "utc": {
+      "type": "string",
+      "maxLength": 64,
+      "format": "date-time",
+      "pattern": "Z$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "nullableSha256": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/sha256" }]
+    },
+    "nonNegativeInteger": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "nullableNonNegativeInteger": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/nonNegativeInteger" }]
+    },
+    "path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$",
+      "not": {
+        "pattern": "(?:^|/)(?:\\.git|\\.project-context|\\.project-runtime|credentials|logs|review|secrets)(?:/|$)"
+      }
+    },
+    "descriptorSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "id", "version"],
+      "properties": {
+        "path": { "const": ".orchestrator/schemas/work-projection-v2-descriptor.schema.json" },
+        "id": { "const": "https://isolate-vscode.local/schemas/work-projection-v2-descriptor.v2.json" },
+        "version": { "const": 2 }
+      }
+    },
+    "transport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "access", "base", "descriptorPath", "commitPoint", "publicationOrder"],
+      "properties": {
+        "kind": { "const": "filesystem-json" },
+        "access": { "const": "read-only" },
+        "base": { "const": "controller-workspace" },
+        "descriptorPath": { "$ref": "#/$defs/path" },
+        "commitPoint": { "const": "descriptor" },
+        "publicationOrder": {
+          "type": "array",
+          "prefixItems": [
+            { "const": "projection-artifact" },
+            { "const": "descriptor" }
+          ],
+          "items": false,
+          "minItems": 2,
+          "maxItems": 2
+        }
+      }
+    },
+    "contractAdvertisement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "schemaVersion", "contractVersion", "status", "descriptorPath"],
+      "properties": {
+        "id": { "enum": ["work-projection-v2", "backend-consumer-v1"] },
+        "schemaVersion": { "enum": [1, 2] },
+        "contractVersion": { "enum": ["v0.1.0", "v0.2.0"] },
+        "status": { "enum": ["available", "disabled", "fallback"] },
+        "descriptorPath": { "$ref": "#/$defs/path" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "id": { "const": "work-projection-v2" } } },
+          "then": {
+            "properties": {
+              "schemaVersion": { "const": 2 },
+              "contractVersion": { "const": "v0.2.0" },
+              "status": { "enum": ["available", "disabled"] }
+            }
+          },
+          "else": {
+            "properties": {
+              "schemaVersion": { "const": 1 },
+              "contractVersion": { "const": "v0.1.0" },
+              "status": { "const": "fallback" }
+            }
+          }
+        }
+      ]
+    },
+    "handshake": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["negotiation", "preferred", "fallback", "contracts"],
+      "properties": {
+        "negotiation": { "const": "explicit" },
+        "preferred": { "enum": ["work-projection-v2", "backend-consumer-v1"] },
+        "fallback": { "const": "backend-consumer-v1" },
+        "contracts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/contractAdvertisement" },
+          "minItems": 2,
+          "maxItems": 2,
+          "allOf": [
+            { "contains": { "type": "object", "properties": { "id": { "const": "work-projection-v2" } }, "required": ["id"] } },
+            { "contains": { "type": "object", "properties": { "id": { "const": "backend-consumer-v1" } }, "required": ["id"] } }
+          ]
+        }
+      }
+    },
+    "projectionSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "id", "version"],
+      "properties": {
+        "path": { "const": ".orchestrator/schemas/work-projection-v2.schema.json" },
+        "id": { "const": "https://isolate-vscode.local/schemas/work-projection-v2.v2.json" },
+        "version": { "const": 2 }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "root", "path", "mediaType", "immutable", "contentAddressedBy", "schema",
+        "sequence", "projectionSha256", "fileSha256", "byteCount"
+      ],
+      "properties": {
+        "root": { "$ref": "#/$defs/path" },
+        "path": { "$ref": "#/$defs/path" },
+        "mediaType": { "const": "application/json" },
+        "immutable": { "const": true },
+        "contentAddressedBy": { "const": "fileSha256" },
+        "schema": { "$ref": "#/$defs/projectionSchema" },
+        "sequence": { "$ref": "#/$defs/nonNegativeInteger" },
+        "projectionSha256": { "$ref": "#/$defs/sha256" },
+        "fileSha256": { "$ref": "#/$defs/sha256" },
+        "byteCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2097152
+        }
+      }
+    }
+  }
+}

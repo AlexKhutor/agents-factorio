@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "fixtureSet": "own-ui-a0-compatibility",
+  "frozenAtUtc": "2026-08-30T11:40:00.000Z",
+  "entries": [
+    {
+      "id": "backend-consumer-v1",
+      "contractVersion": "v0.1.0",
+      "canonicalSha256": "4e0217c949d94e5e5ac6a72c14fd163f36ec46d01b4acc972104fa6f089b83ec",
+      "requiredInvariants": ["read-only", "relative-paths", "coherent-v1", "separate-command-adapter"]
+    },
+    {
+      "id": "work-projection-v2-live",
+      "contractVersion": "v0.2.0",
+      "canonicalSha256": "f8d81075b1b289181dc5b4133d87d75305f5afa0293d42529ae19166710604bf",
+      "requiredInvariants": ["six-layers", "authority", "freshness", "renderer-neutral"]
+    },
+    {
+      "id": "backend-command-v0.1-stop",
+      "contractVersion": "v0.1.0",
+      "canonicalSha256": "61d8ae36af1c3be2bd7d2e2037f77792e78cc4831d2992257104fd55ad923403",
+      "requiredInvariants": ["exact-target", "fresh-sequence", "request-id", "no-unknown-fields"]
+    },
+    {
+      "id": "current-codex-adapter",
+      "contractVersion": "v0.3.1",
+      "canonicalSha256": "164cad2d0cf9ad8d77283e72593d129689d4111eb8c847fec6faa898907a1245",
+      "requiredInvariants": ["hybrid-truth", "ui-mutations-emulated", "exact-runtime", "no-private-data"]
+    },
+    {
+      "id": "codex-app-server-read-adapter",
+      "contractVersion": "v0.5.2",
+      "canonicalSha256": "4d24396fe07461eba92bea7949fa41e85fbf1938a1dabc3d49d778543d6c4f90",
+      "requiredInvariants": ["read-only-capabilities", "provider-identity", "bounded-records", "no-mutation-claim"]
+    }
+  ]
+}

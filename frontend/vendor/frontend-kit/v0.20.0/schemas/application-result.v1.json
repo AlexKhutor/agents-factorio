@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/application-result.v1.json",
+  "title": "Application Result Envelope v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "contractVersion", "requestId", "correlationId",
+    "operation", "outcome", "startedAtUtc", "completedAtUtc", "diagnostics"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "requestId": {
+      "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/envelopeId"
+    },
+    "correlationId": {
+      "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/envelopeId"
+    },
+    "causationId": {
+      "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/envelopeId"
+    },
+    "operation": {
+      "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/operationRef"
+    },
+    "outcome": { "enum": ["succeeded", "accepted", "failed", "uncertain"] },
+    "startedAtUtc": {
+      "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/utc"
+    },
+    "completedAtUtc": {
+      "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/utc"
+    },
+    "output": {
+      "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/jsonValue"
+    },
+    "error": {
+      "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/error"
+    },
+    "diagnostics": {
+      "type": "array",
+      "maxItems": 16,
+      "items": {
+        "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/diagnostic"
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "outcome": { "enum": ["failed", "uncertain"] } },
+        "required": ["outcome"]
+      },
+      "then": {
+        "required": ["error"],
+        "properties": {
+          "error": {
+            "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/error"
+          },
+          "output": false
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "outcome": { "enum": ["succeeded", "accepted"] } },
+        "required": ["outcome"]
+      },
+      "then": { "properties": { "error": false } }
+    },
+    {
+      "if": {
+        "properties": { "outcome": { "const": "uncertain" } },
+        "required": ["outcome"]
+      },
+      "then": {
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": { "code": { "const": "uncertain_outcome" } },
+            "required": ["code"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "outcome": { "const": "failed" } },
+        "required": ["outcome"]
+      },
+      "then": {
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": { "code": { "not": { "const": "uncertain_outcome" } } },
+            "required": ["code"]
+          }
+        }
+      }
+    }
+  ]
+}

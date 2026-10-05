@@ -1,0 +1,4 @@
+interface:
+  display_name: "Signal Orchestrator"
+  short_description: "Publish a verified child completion event"
+  default_prompt: "Validate the current orchestrated report and publish its local controller wake signal."

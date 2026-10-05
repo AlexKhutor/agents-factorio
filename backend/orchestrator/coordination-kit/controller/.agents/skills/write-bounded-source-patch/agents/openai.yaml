@@ -1,0 +1,4 @@
+interface:
+  display_name: "Write Bounded Source Patch"
+  short_description: "Split Windows source edits into safe patches"
+  default_prompt: "Use $write-bounded-source-patch to apply this confirmed source or documentation edit without exceeding Windows command-line limits."

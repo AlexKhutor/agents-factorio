@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/application-interaction-response.v0.1.0.json",
+  "title": "Application Interaction Response v0.1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "contractVersion", "responseId", "requestId",
+    "requestSha256", "requestRevision", "sourceSequence", "operator",
+    "selectedResponse", "responseValue", "respondedAtUtc", "responseSha256"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "responseId": { "$ref": "#/$defs/id" },
+    "requestId": { "$ref": "#/$defs/id" },
+    "requestSha256": { "$ref": "#/$defs/sha256" },
+    "requestRevision": { "type": "integer", "minimum": 1 },
+    "sourceSequence": { "type": "integer", "minimum": 0 },
+    "operator": {
+      "allOf": [
+        { "$ref": "https://isolate-vscode.local/schemas/application-actor-ref.v1.json" },
+        { "type": "object", "properties": { "actorType": { "const": "local-operator" } } }
+      ]
+    },
+    "selectedResponse": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,63}$"
+    },
+    "responseValue": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "string", "minLength": 1, "maxLength": 4096 }
+      ]
+    },
+    "respondedAtUtc": { "type": "string", "format": "date-time" },
+    "responseSha256": { "$ref": "#/$defs/sha256" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

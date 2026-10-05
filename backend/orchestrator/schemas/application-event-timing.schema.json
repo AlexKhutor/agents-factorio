@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/application-event-timing.v1.json",
+  "title": "Application event timing assessment v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "contractVersion", "eventId", "publicationId",
+    "evidenceClocks", "clientClocks", "agesSeconds", "freshness",
+    "thresholds", "displayCadenceOwner"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "eventId": {
+      "type": "string",
+      "pattern": "^application-event-[a-f0-9]{64}$"
+    },
+    "publicationId": {
+      "type": "string",
+      "pattern": "^application-publication-[a-f0-9]{64}$"
+    },
+    "evidenceClocks": { "$ref": "#/$defs/evidenceClocks" },
+    "clientClocks": { "$ref": "#/$defs/clientClocks" },
+    "agesSeconds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["occurrence", "observation", "publication", "arrival", "clientQueue"],
+      "properties": {
+        "occurrence": { "$ref": "#/$defs/nullableSeconds" },
+        "observation": { "$ref": "#/$defs/nullableSeconds" },
+        "publication": { "$ref": "#/$defs/nullableSeconds" },
+        "arrival": { "$ref": "#/$defs/nullableSeconds" },
+        "clientQueue": { "$ref": "#/$defs/nullableSeconds" }
+      }
+    },
+    "freshness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["occurrence", "observation", "publication"],
+      "properties": {
+        "occurrence": { "$ref": "#/$defs/freshness" },
+        "observation": { "$ref": "#/$defs/freshness" },
+        "publication": { "$ref": "#/$defs/freshness" }
+      }
+    },
+    "thresholds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["delayedAfterSeconds", "staleAfterSeconds"],
+      "properties": {
+        "delayedAfterSeconds": { "type": "number", "minimum": 0, "maximum": 86400 },
+        "staleAfterSeconds": { "type": "number", "exclusiveMinimum": 0, "maximum": 86400 }
+      }
+    },
+    "displayCadenceOwner": { "const": "frontend" }
+  },
+  "$defs": {
+    "utc": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$",
+      "maxLength": 64
+    },
+    "evidenceClocks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["occurredAtUtc", "observedAtUtc", "publishedAtUtc"],
+      "properties": {
+        "occurredAtUtc": { "$ref": "#/$defs/utc" },
+        "observedAtUtc": { "$ref": "#/$defs/utc" },
+        "publishedAtUtc": { "$ref": "#/$defs/utc" }
+      }
+    },
+    "clientClocks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["receivedAtUtc", "evaluatedAtUtc"],
+      "properties": {
+        "receivedAtUtc": { "$ref": "#/$defs/utc" },
+        "evaluatedAtUtc": { "$ref": "#/$defs/utc" }
+      }
+    },
+    "nullableSeconds": {
+      "anyOf": [
+        { "type": "number", "minimum": 0 },
+        { "type": "null" }
+      ]
+    },
+    "freshness": { "enum": ["live", "delayed", "stale", "unknown"] }
+  }
+}

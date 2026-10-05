@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/child-executions.v1.json",
+  "title": "Normalized child executions v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "contractVersion", "sourceId", "taskId",
+    "taskSha256", "updatedAtUtc", "executions"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "sourceId": { "$ref": "#/$defs/id" },
+    "taskId": { "$ref": "#/$defs/id" },
+    "taskSha256": { "$ref": "#/$defs/sha256" },
+    "updatedAtUtc": { "$ref": "#/$defs/utc" },
+    "executions": {
+      "type": "array",
+      "maxItems": 1000,
+      "items": { "$ref": "#/$defs/execution" }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$"
+    },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "utc": {
+      "type": "string",
+      "maxLength": 64,
+      "format": "date-time",
+      "pattern": "Z$"
+    },
+    "providerRef": {
+      "allOf": [
+        { "$ref": "external-reference.schema.json" },
+        {
+          "properties": {
+            "kind": { "enum": ["provider-thread", "provider-turn", "provider-item"] },
+            "relationship": { "const": "correlates-with" }
+          }
+        }
+      ]
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "executionId", "attempt", "state", "acceptedAtUtc", "startedAtUtc",
+        "finishedAtUtc", "lastObservedAtUtc", "submissionState", "providerRefs",
+        "errorCode"
+      ],
+      "properties": {
+        "executionId": { "$ref": "#/$defs/id" },
+        "attempt": { "type": "integer", "minimum": 1, "maximum": 1000 },
+        "state": {
+          "enum": [
+            "starting", "running", "completed", "failed", "interrupted",
+            "cancelled", "unknown"
+          ]
+        },
+        "acceptedAtUtc": { "$ref": "#/$defs/utc" },
+        "startedAtUtc": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/utc" }]
+        },
+        "finishedAtUtc": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/utc" }]
+        },
+        "lastObservedAtUtc": { "$ref": "#/$defs/utc" },
+        "submissionState": {
+          "enum": ["not-submitted", "submitted", "confirmed", "uncertain"]
+        },
+        "providerRefs": {
+          "type": "array",
+          "maxItems": 16,
+          "items": { "$ref": "#/$defs/providerRef" }
+        },
+        "errorCode": { "type": ["string", "null"], "maxLength": 128 }
+      }
+    }
+  }
+}

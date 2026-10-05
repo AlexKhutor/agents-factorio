@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/application-agent-events.v1.json",
+  "title": "Agent observed metadata events v0.1.0",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "contractVersion", "operationId", "input"],
+  "properties": { "schemaVersion": { "const": 1 }, "contractVersion": { "const": "v0.1.0" },
+    "operationId": { "const": "query.agent-events.read" }, "input": { "$ref": "#/$defs/input" } },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$", "maxLength": 160 },
+    "cursor": { "type": "string", "minLength": 1, "maxLength": 2048 },
+    "input": { "type": "object", "additionalProperties": false, "required": ["agentId"],
+      "properties": { "agentId": { "$ref": "#/$defs/id" },
+        "cursor": { "anyOf": [{ "$ref": "#/$defs/cursor" }, { "type": "null" }] },
+        "limit": { "type": "integer", "minimum": 1, "maximum": 64 } } },
+    "event": { "type": "object", "additionalProperties": false,
+      "required": ["sequence", "turnId", "itemId", "kind", "observedAtUtc"],
+      "properties": { "sequence": { "type": "integer", "minimum": 1 }, "turnId": { "anyOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }] },
+        "itemId": { "anyOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }] },
+        "kind": { "enum": ["turn-started", "turn-completed", "item-started", "item-completed", "interaction-changed"] },
+        "observedAtUtc": { "type": "string", "format": "date-time", "maxLength": 32 } } },
+    "page": { "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "contractVersion", "agentId", "conversationId", "mode", "reasonCode", "coverage", "events", "hasMore", "nextCursor", "observedAtUtc"],
+      "properties": { "schemaVersion": { "const": 1 }, "contractVersion": { "const": "v0.1.0" },
+        "agentId": { "$ref": "#/$defs/id" }, "conversationId": { "$ref": "#/$defs/id" },
+        "mode": { "enum": ["resumed", "snapshot-required", "resync-required"] },
+        "reasonCode": { "enum": [null, "initial_snapshot_required", "cursor_invalid", "replay_gap"] },
+        "coverage": { "const": "observed-only" }, "events": { "type": "array", "maxItems": 64, "items": { "$ref": "#/$defs/event" } },
+        "hasMore": { "type": "boolean" }, "nextCursor": { "$ref": "#/$defs/cursor" },
+        "observedAtUtc": { "type": "string", "format": "date-time", "maxLength": 32 } },
+      "allOf": [{ "if": { "properties": { "mode": { "const": "resumed" } } },
+        "then": { "properties": { "reasonCode": { "type": "null" } } },
+        "else": { "properties": { "events": { "type": "array", "maxItems": 0 }, "hasMore": { "const": false },
+          "reasonCode": { "type": "string" } } } }]
+    }
+  }
+}

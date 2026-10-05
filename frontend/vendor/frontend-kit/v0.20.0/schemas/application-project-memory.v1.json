@@ -1,0 +1,563 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/application-project-memory.v1.json",
+  "title": "Application Project Memory Operations v0.1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "contractVersion", "operationId", "input"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "operationId": {
+      "enum": [
+        "query.memory.scopes.list",
+        "query.memory.scope.read",
+        "mutation.memory.scope.create",
+        "mutation.memory.scope.write",
+        "query.memory.agents.list",
+        "query.memory.agent.read",
+        "query.memory.agent.context",
+        "mutation.memory.agent.create",
+        "mutation.memory.agent.close",
+        "query.memory.agent.archive",
+        "mutation.memory.agent.send",
+        "receipt.memory.agent.send"
+      ]
+    },
+    "input": { "type": "object" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "operationId": { "const": "query.memory.scopes.list" } }, "required": ["operationId"] },
+      "then": { "properties": { "input": { "$ref": "#/$defs/listScopesInput" } } }
+    },
+    {
+      "if": { "properties": { "operationId": { "const": "query.memory.scope.read" } }, "required": ["operationId"] },
+      "then": { "properties": { "input": { "$ref": "#/$defs/readScopeInput" } } }
+    },
+    {
+      "if": { "properties": { "operationId": { "const": "mutation.memory.scope.create" } }, "required": ["operationId"] },
+      "then": { "properties": { "input": { "$ref": "#/$defs/createScopeInput" } } }
+    },
+    {
+      "if": { "properties": { "operationId": { "const": "mutation.memory.scope.write" } }, "required": ["operationId"] },
+      "then": { "properties": { "input": { "$ref": "#/$defs/writeScopeInput" } } }
+    },
+    {
+      "if": { "properties": { "operationId": { "const": "query.memory.agents.list" } }, "required": ["operationId"] },
+      "then": { "properties": { "input": { "$ref": "#/$defs/listAgentsInput" } } }
+    },
+    {
+      "if": { "properties": { "operationId": { "enum": ["query.memory.agent.read", "query.memory.agent.context"] } }, "required": ["operationId"] },
+      "then": { "properties": { "input": { "$ref": "#/$defs/agentInput" } } }
+    },
+    {
+      "if": { "properties": { "operationId": { "const": "mutation.memory.agent.create" } }, "required": ["operationId"] },
+      "then": { "properties": { "input": { "$ref": "#/$defs/createAgentInput" } } }
+    },
+    {
+      "if": { "properties": { "operationId": { "enum": ["mutation.memory.agent.close", "receipt.memory.agent.send"] } }, "required": ["operationId"] },
+      "then": { "properties": { "input": { "$ref": "#/$defs/agentOperationInput" } } }
+    },
+    {
+      "if": { "properties": { "operationId": { "const": "query.memory.agent.archive" } }, "required": ["operationId"] },
+      "then": { "properties": { "input": { "$ref": "#/$defs/archiveInput" } } }
+    },
+    {
+      "if": { "properties": { "operationId": { "const": "mutation.memory.agent.send" } }, "required": ["operationId"] },
+      "then": { "properties": { "input": { "$ref": "#/$defs/sendInput" } } }
+    }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740990
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "utc": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$",
+      "maxLength": 32
+    },
+    "nullableId": {
+      "oneOf": [
+        { "$ref": "#/$defs/id" },
+        { "type": "null" }
+      ]
+    },
+    "nullableUtc": {
+      "oneOf": [
+        { "$ref": "#/$defs/utc" },
+        { "type": "null" }
+      ]
+    },
+    "problemCode": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 71,
+      "pattern": "^memory_[a-z_]{1,64}$"
+    },
+    "manifestScope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scopeId", "revision", "sha256"],
+      "properties": {
+        "scopeId": { "$ref": "#/$defs/id" },
+        "revision": { "$ref": "#/$defs/revision" },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["project", "quarter", "manifestHash"],
+      "properties": {
+        "project": { "$ref": "#/$defs/manifestScope" },
+        "quarter": { "$ref": "#/$defs/manifestScope" },
+        "agent": {
+          "$ref": "#/$defs/manifestScope",
+          "description": "The agent's own memory; absent for agents created before agent memory existed."
+        },
+        "manifestHash": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "nullableManifest": {
+      "oneOf": [
+        { "$ref": "#/$defs/manifest" },
+        { "type": "null" }
+      ]
+    },
+    "providerBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["projectId", "sourceId", "providerId", "threadId"],
+      "properties": {
+        "projectId": { "$ref": "#/$defs/id" },
+        "sourceId": { "$ref": "#/$defs/id" },
+        "providerId": { "$ref": "#/$defs/id" },
+        "threadId": { "$ref": "#/$defs/id" }
+      }
+    },
+    "nullableProviderBinding": {
+      "oneOf": [
+        { "$ref": "#/$defs/providerBinding" },
+        { "type": "null" }
+      ]
+    },
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "text"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "text": { "type": "string", "maxLength": 65536 }
+      }
+    },
+    "entries": {
+      "type": "array",
+      "maxItems": 64,
+      "items": { "$ref": "#/$defs/entry" }
+    },
+    "scopeMetadataCore": {
+      "type": "object",
+      "required": [
+        "schemaVersion", "scopeId", "kind", "projectId", "quarterId", "title",
+        "revision", "sha256", "author", "updatedAtUtc"
+      ],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "scopeId": { "$ref": "#/$defs/id" },
+        "kind": { "enum": ["project", "quarter", "agent"] },
+        "projectId": { "$ref": "#/$defs/id" },
+        "quarterId": {
+          "oneOf": [
+            { "$ref": "#/$defs/id" },
+            { "type": "null" }
+          ]
+        },
+        "title": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "revision": { "$ref": "#/$defs/revision" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "author": {
+          "$ref": "#/$defs/id",
+          "description": "Audit label only; it is not an authorization claim."
+        },
+        "updatedAtUtc": { "$ref": "#/$defs/utc" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "project" } }, "required": ["kind"] },
+          "then": { "properties": { "quarterId": { "type": "null" } } }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "quarter" } }, "required": ["kind"] },
+          "then": { "properties": { "quarterId": { "$ref": "#/$defs/id" } } }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "agent" } }, "required": ["kind"] },
+          "then": { "properties": { "quarterId": { "$ref": "#/$defs/id" } } }
+        }
+      ]
+    },
+    "scopeMetadata": {
+      "type": "object",
+      "$ref": "#/$defs/scopeMetadataCore",
+      "unevaluatedProperties": false
+    },
+    "scope": {
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/scopeMetadataCore" },
+        {
+          "type": "object",
+          "required": ["entries"],
+          "properties": {
+            "entries": { "$ref": "#/$defs/entries" }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion", "agentId", "project", "quarter", "manifestHash",
+        "contentState", "deliveryState", "deliveredManifest", "requiredManifest",
+        "startBlockedByEmptyMemory"
+      ],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "agentId": { "$ref": "#/$defs/id" },
+        "project": { "$ref": "#/$defs/scope" },
+        "quarter": { "$ref": "#/$defs/scope" },
+        "manifestHash": { "$ref": "#/$defs/sha256" },
+        "contentState": { "enum": ["empty", "partial", "populated"] },
+        "deliveryState": {
+          "enum": ["pending", "delivered", "failed", "uncertain", "unsupported", "archived"]
+        },
+        "deliveredManifest": { "$ref": "#/$defs/nullableManifest" },
+        "requiredManifest": { "$ref": "#/$defs/manifest" },
+        "startBlockedByEmptyMemory": { "const": false },
+        "agent": {
+          "oneOf": [
+            { "$ref": "#/$defs/scope" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "attention": {
+      "type": "object", "additionalProperties": false,
+      "required": ["availability", "coverage", "sourceSequence", "sourceRevision", "pendingQuestions", "pendingApprovals", "recoveryRequired", "observedAtUtc"],
+      "properties": {
+        "availability": { "enum": ["available", "unavailable"] },
+        "coverage": { "const": "captured-only" },
+        "sourceSequence": { "type": ["integer", "null"], "minimum": 0 },
+        "sourceRevision": { "type": ["integer", "null"], "minimum": 0 },
+        "pendingQuestions": { "type": ["integer", "null"], "minimum": 0 },
+        "pendingApprovals": { "type": ["integer", "null"], "minimum": 0 },
+        "recoveryRequired": { "type": ["integer", "null"], "minimum": 0 },
+        "observedAtUtc": { "$ref": "#/$defs/nullableUtc" }
+      },
+      "allOf": [{
+        "if": { "properties": { "availability": { "const": "available" } }, "required": ["availability"] },
+        "then": { "properties": {
+          "sourceSequence": { "type": "integer" }, "sourceRevision": { "type": "integer" },
+          "pendingQuestions": { "type": "integer" }, "pendingApprovals": { "type": "integer" },
+          "recoveryRequired": { "type": "integer" }, "observedAtUtc": { "type": "string" }
+        } },
+        "else": { "properties": {
+          "sourceSequence": { "type": "null" }, "sourceRevision": { "type": "null" },
+          "pendingQuestions": { "type": "null" }, "pendingApprovals": { "type": "null" },
+          "recoveryRequired": { "type": "null" }, "observedAtUtc": { "type": "null" }
+        } }
+      }]
+    },
+    "agentActivity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "sinceUtc"],
+      "properties": {
+        "state": {
+          "enum": ["working", "waiting-for-person", "idle", "uncertain", "closed", "unknown"],
+          "description": "idle: no message runs; the agent waits for a task. waiting-for-person: a running message waits for the person's answer, or the agent holds a started controller task between messages (its plan waits for confirmation, say)."
+        },
+        "sinceUtc": { "$ref": "#/$defs/nullableUtc" }
+      }
+    },
+    "agentSettings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "writeZone", "revision", "updatedAtUtc"],
+      "properties": {
+        "role": {
+          "enum": ["feature", "project-lead", "quarter-lead", "coordinator"],
+          "description": "coordinator: the controller's main orchestrator as a desk agent, at most one; it dispatches and starts controller tasks for other agents."
+        },
+        "writeZone": {
+          "description": "Paths of the project folder a feature agent may change; null is the whole folder. Leads have the fixed zone docs/memory/**, the coordinator coordination/drafts/**.",
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "array", "minItems": 1, "maxItems": 32,
+              "items": { "type": "string", "minLength": 1, "maxLength": 200 }
+            }
+          ]
+        },
+        "revision": { "type": "integer", "minimum": 0 },
+        "updatedAtUtc": { "$ref": "#/$defs/nullableUtc" }
+      }
+    },
+    "agentCore": {
+      "type": "object",
+      "required": [
+        "agentId", "projectId", "quarterId", "operationId", "profile", "state",
+        "binding", "assignedManifest", "deliveredManifest", "currentOperationId",
+        "createdAtUtc", "archivedAtUtc", "coverage"
+      ],
+      "properties": {
+        "agentId": { "$ref": "#/$defs/id" },
+        "projectId": { "$ref": "#/$defs/id" },
+        "quarterId": { "$ref": "#/$defs/id" },
+        "operationId": { "$ref": "#/$defs/id" },
+        "profile": { "$ref": "#/$defs/profile" },
+        "state": {
+          "enum": ["creating", "active", "failed", "uncertain", "closing", "archived"]
+        },
+        "binding": { "$ref": "#/$defs/nullableProviderBinding" },
+        "assignedManifest": { "$ref": "#/$defs/manifest" },
+        "deliveredManifest": { "$ref": "#/$defs/nullableManifest" },
+        "requiredManifest": { "$ref": "#/$defs/manifest" },
+        "deliveryState": {
+          "enum": ["pending", "delivered", "failed", "uncertain", "unsupported", "archived"]
+        },
+        "contentState": { "enum": ["empty", "partial", "populated"] },
+        "attention": { "$ref": "#/$defs/attention" },
+        "currentOperationId": { "$ref": "#/$defs/nullableId" },
+        "lastOperation": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "object", "additionalProperties": false, "required": ["operationId", "state"],
+              "properties": {
+                "operationId": { "$ref": "#/$defs/id" },
+                "state": { "$ref": "#/$defs/agentOperationCore/properties/state" }
+              }
+            }
+          ]
+        },
+        "closeOperationId": { "$ref": "#/$defs/id" },
+        "createdAtUtc": { "$ref": "#/$defs/utc" },
+        "archivedAtUtc": { "$ref": "#/$defs/nullableUtc" },
+        "coverage": { "const": "captured-only" },
+        "problemCode": { "$ref": "#/$defs/problemCode" },
+        "agentScopeId": { "$ref": "#/$defs/id" },
+        "settings": { "$ref": "#/$defs/agentSettings" },
+        "activity": { "$ref": "#/$defs/agentActivity" }
+      }
+    },
+    "agent": {
+      "type": "object",
+      "$ref": "#/$defs/agentCore",
+      "unevaluatedProperties": false
+    },
+    "agentOperationCore": {
+      "type": "object",
+      "required": [
+        "operationId", "intentHash", "manifest", "state", "turnId", "requestedAtUtc"
+      ],
+      "properties": {
+        "operationId": { "$ref": "#/$defs/id" },
+        "intentHash": { "$ref": "#/$defs/sha256" },
+        "manifest": { "$ref": "#/$defs/manifest" },
+        "state": {
+          "enum": [
+            "requested", "accepted", "started", "completed", "failed", "interrupted", "uncertain"
+          ]
+        },
+        "turnId": { "$ref": "#/$defs/nullableId" },
+        "requestedAtUtc": { "$ref": "#/$defs/utc" },
+        "problemCode": { "$ref": "#/$defs/problemCode" },
+        "settledAtUtc": {
+          "$ref": "#/$defs/utc",
+          "description": "When the backend saw the message end; the agent is idle from then on."
+        },
+        "memorySnapshot": {
+          "enum": ["full", "unchanged"],
+          "description": "Whether the message carried the memory snapshot or only noted that it was unchanged."
+        }
+      }
+    },
+    "agentOperation": {
+      "type": "object",
+      "$ref": "#/$defs/agentOperationCore",
+      "unevaluatedProperties": false
+    },
+    "sendReceipt": {
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/agentOperationCore" },
+        {
+          "type": "object",
+          "required": ["observation"],
+          "properties": {
+            "observation": { "enum": ["terminal", "unavailable", "available"] }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "model", "reasoningEffort", "fallbackPolicy"],
+      "properties": {
+        "provider": { "$ref": "#/$defs/id" },
+        "model": { "$ref": "#/$defs/id" },
+        "reasoningEffort": { "$ref": "#/$defs/id" },
+        "fallbackPolicy": { "const": "deny" }
+      }
+    },
+    "listScopesInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "projectId": { "$ref": "#/$defs/id" }
+      }
+    },
+    "readScopeInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scopeId"],
+      "properties": {
+        "scopeId": { "$ref": "#/$defs/id" },
+        "revision": { "$ref": "#/$defs/revision" }
+      }
+    },
+    "createScopeInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scopeId", "kind", "projectId", "quarterId", "title", "operationId"
+      ],
+      "properties": {
+        "scopeId": { "$ref": "#/$defs/id" },
+        "kind": { "enum": ["project", "quarter"] },
+        "projectId": { "$ref": "#/$defs/id" },
+        "quarterId": {
+          "oneOf": [
+            { "$ref": "#/$defs/id" },
+            { "type": "null" }
+          ]
+        },
+        "title": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "operationId": { "$ref": "#/$defs/id" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "project" } }, "required": ["kind"] },
+          "then": { "properties": { "quarterId": { "type": "null" } } }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "quarter" } }, "required": ["kind"] },
+          "then": { "properties": { "quarterId": { "$ref": "#/$defs/id" } } }
+        }
+      ]
+    },
+    "writeScopeInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scopeId", "expectedRevision", "entries", "operationId", "commandId", "actorId"
+      ],
+      "properties": {
+        "scopeId": { "$ref": "#/$defs/id" },
+        "expectedRevision": { "$ref": "#/$defs/revision" },
+        "entries": { "$ref": "#/$defs/entries" },
+        "operationId": { "$ref": "#/$defs/id" },
+        "commandId": {
+          "$ref": "#/$defs/id",
+          "description": "Reference to a preauthorized durable local user-command grant."
+        },
+        "actorId": {
+          "$ref": "#/$defs/id",
+          "description": "Audit label only; it is not an authorization claim."
+        }
+      }
+    },
+    "listAgentsInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "projectId": { "$ref": "#/$defs/id" },
+        "quarterId": { "$ref": "#/$defs/id" }
+      }
+    },
+    "agentInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["agentId"],
+      "properties": {
+        "agentId": { "$ref": "#/$defs/id" }
+      }
+    },
+    "createAgentInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["agentId", "projectId", "quarterId", "operationId", "profile"],
+      "properties": {
+        "agentId": { "$ref": "#/$defs/id" },
+        "projectId": { "$ref": "#/$defs/id" },
+        "quarterId": { "$ref": "#/$defs/id" },
+        "operationId": { "$ref": "#/$defs/id" },
+        "profile": { "$ref": "#/$defs/profile" }
+      }
+    },
+    "agentOperationInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["agentId", "operationId"],
+      "properties": {
+        "agentId": { "$ref": "#/$defs/id" },
+        "operationId": { "$ref": "#/$defs/id" }
+      }
+    },
+    "archiveInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["agentId"],
+      "properties": {
+        "agentId": { "$ref": "#/$defs/id" },
+        "cursor": {
+          "oneOf": [
+            { "type": "string", "minLength": 1, "maxLength": 1024 },
+            { "type": "null" }
+          ]
+        },
+        "limit": { "type": "integer", "minimum": 1, "maximum": 100 }
+      }
+    },
+    "sendInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["agentId", "operationId", "text"],
+      "properties": {
+        "agentId": { "$ref": "#/$defs/id" },
+        "operationId": { "$ref": "#/$defs/id" },
+        "text": { "type": "string", "minLength": 1, "maxLength": 16384 }
+      }
+    }
+  }
+}

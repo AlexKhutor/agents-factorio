@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/workspace-provisioning-request.schema.json",
+  "title": "Workspace provisioning request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "operationId",
+    "sourceId",
+    "displayName",
+    "purpose",
+    "targetPath",
+    "featureFolder",
+    "ownerId",
+    "repositoryPolicy",
+    "providerRoute",
+    "executionProfile"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "operationId": { "$ref": "#/$defs/identifier" },
+    "sourceId": { "$ref": "#/$defs/identifier" },
+    "displayName": { "type": "string", "minLength": 1, "maxLength": 160 },
+    "purpose": { "type": "string", "minLength": 1, "maxLength": 4096 },
+    "targetPath": { "type": "string", "minLength": 1, "maxLength": 1024 },
+    "featureFolder": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$",
+      "not": { "enum": [".", ".."] }
+    },
+    "ownerId": { "$ref": "#/$defs/identifier" },
+    "repositoryPolicy": { "enum": ["new-local", "existing-local", "preserve-existing"] },
+    "providerRoute": { "$ref": "#/$defs/identifier" },
+    "executionProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "model", "reasoningEffort", "fallbackPolicy"],
+      "properties": {
+        "provider": { "$ref": "#/$defs/identifier" },
+        "model": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "reasoningEffort": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "fallbackPolicy": { "const": "deny" }
+      }
+    }
+  },
+  "allOf": [{
+    "if": { "properties": { "repositoryPolicy": { "const": "preserve-existing" } } },
+    "then": { "properties": { "providerRoute": { "const": "claude-code" } } }
+  }],
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$"
+    }
+  }
+}

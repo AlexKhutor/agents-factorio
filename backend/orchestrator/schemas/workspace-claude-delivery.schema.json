@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/workspace-claude-delivery.schema.json",
+  "$ref": "#/$defs/binding",
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "binding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["contractVersion", "deliveryMode", "transport", "taskSha256", "sessionId", "targetPath"],
+      "properties": {
+        "contractVersion": { "const": "v0.2.0" },
+        "deliveryMode": { "enum": ["packet-bootstrap", "direct-instruction"] },
+        "transport": { "enum": ["background", "programmatic"] },
+        "taskSha256": { "$ref": "#/$defs/hash" },
+        "sessionId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$" },
+        "targetPath": { "type": "string", "minLength": 1 }
+      },
+      "allOf": [{
+        "if": { "properties": { "deliveryMode": { "const": "direct-instruction" } } },
+        "then": { "properties": { "transport": { "const": "programmatic" } } }
+      }]
+    },
+    "support": {
+      "type": "object", "additionalProperties": false,
+      "required": ["contractVersion", "packageSha256", "deliveryContractVersions"],
+      "properties": {
+        "contractVersion": { "const": "v0.1.0" },
+        "packageSha256": { "$ref": "#/$defs/hash" },
+        "deliveryContractVersions": { "const": ["v0.2.0"] }
+      }
+    },
+    "configuration": {
+      "type": "object", "additionalProperties": false,
+      "required": ["contractVersion", "delivery", "configuration"],
+      "properties": {
+        "contractVersion": { "const": "v0.2.0" },
+        "delivery": { "$ref": "#/$defs/binding" },
+        "configuration": { "type": "object" }
+      }
+    },
+    "replay": {
+      "type": "object", "additionalProperties": false,
+      "required": ["binding", "configurationSha256", "packageSha256"],
+      "properties": {
+        "binding": { "$ref": "#/$defs/binding" },
+        "configurationSha256": { "$ref": "#/$defs/hash" },
+        "packageSha256": { "$ref": "#/$defs/hash" }
+      }
+    }
+  }
+}

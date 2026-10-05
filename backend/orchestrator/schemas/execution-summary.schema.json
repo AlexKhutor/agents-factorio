@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/execution-summary.v1.json",
+  "title": "Bounded Execution Summary v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "stage",
+    "taskId",
+    "sourceId",
+    "outcome",
+    "completedSteps",
+    "remainingSteps",
+    "blockers",
+    "agentResults",
+    "stopEvents",
+    "startedAtUtc",
+    "finishedAtUtc"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "stage": { "enum": ["child-execution", "control-operation", "control-review"] },
+    "taskId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,95}$" },
+    "sourceId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,95}$" },
+    "outcome": { "enum": ["completed", "blocked", "accepted", "rejected", "deferred", "superseded", "cancelled", "failed", "stop_unconfirmed"] },
+    "summary": { "type": "string", "maxLength": 2048 },
+    "completedSteps": {
+      "type": "array",
+      "maxItems": 100,
+      "items": { "type": "string", "maxLength": 256 }
+    },
+    "remainingSteps": {
+      "type": "array",
+      "maxItems": 100,
+      "items": { "type": "string", "maxLength": 256 }
+    },
+    "blockers": {
+      "type": "array",
+      "maxItems": 50,
+      "items": { "type": "string", "maxLength": 256 }
+    },
+    "agentResults": {
+      "type": "array",
+      "maxItems": 256,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["agentId", "state", "summary"],
+        "properties": {
+          "agentId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,95}$" },
+          "state": { "type": "string", "maxLength": 64 },
+          "summary": { "type": "string", "maxLength": 512 },
+          "statistics": { "$ref": "agent-statistics.schema.json" }
+        }
+      }
+    },
+    "stopEvents": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["scope", "status", "atUtc"],
+        "properties": {
+          "scope": { "enum": ["cycle", "task", "agent", "all"] },
+          "targetId": { "type": ["string", "null"], "maxLength": 192 },
+          "status": { "enum": ["requested", "confirmed", "unconfirmed"] },
+          "reason": { "type": ["string", "null"], "maxLength": 512 },
+          "atUtc": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    "sourceRevision": { "type": ["string", "null"], "maxLength": 256 },
+    "decisionReference": { "type": ["string", "null"], "maxLength": 1024 },
+    "diagnostics": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["lookupKey", "status", "summary", "problems", "reportAvailable", "decisionAvailable", "rawTraceAvailable", "updatedAtUtc"],
+          "properties": {
+            "lookupKey": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._:-]{0,255}$" },
+            "status": { "enum": ["starting", "running", "completed", "interrupted", "failed", "stop_unconfirmed", "migrated"] },
+            "summary": { "type": ["string", "null"], "maxLength": 2048 },
+            "problems": { "type": "array", "maxItems": 20, "items": { "type": "string", "maxLength": 256 } },
+            "reportAvailable": { "type": "boolean" },
+            "decisionAvailable": { "type": "boolean" },
+            "rawTraceAvailable": { "type": "boolean" },
+            "updatedAtUtc": { "type": "string", "format": "date-time" }
+          }
+        }
+      ]
+    },
+    "startedAtUtc": { "type": "string", "format": "date-time" },
+    "finishedAtUtc": { "type": "string", "format": "date-time" }
+  }
+}

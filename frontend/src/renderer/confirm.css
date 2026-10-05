@@ -1,0 +1,18 @@
+/* The confirmation window (confirm.html): the look of the Atlas sheets. */
+html, body.confirm-body { background: var(--panel); }
+body.confirm-body { border: 1px solid var(--gold); overflow: hidden; }
+.confirm-card { padding: 0 0 16px; }
+.confirm-head {
+  display: flex; align-items: center; gap: 10px; padding: 12px 16px;
+  background: var(--panel2); border-bottom: 1px solid var(--line);
+  -webkit-app-region: drag; user-select: none;
+}
+.confirm-head .brand-mark { width: 26px; height: 26px; font-size: 13px; }
+.confirm-title { font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text); }
+.confirm-message { padding: 16px 18px 6px; font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.4; }
+.confirm-detail {
+  margin: 8px 18px 0; padding: 10px 12px; border-left: 3px solid var(--gold);
+  background: #2a2d22; color: #e3d4a9; line-height: 1.45; white-space: pre-wrap;
+}
+.confirm-actions { display: flex; justify-content: flex-end; gap: 10px; padding: 16px 18px 0; -webkit-app-region: no-drag; }
+.confirm-actions button { min-width: 110px; }

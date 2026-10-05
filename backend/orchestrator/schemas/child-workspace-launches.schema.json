@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/child-workspace-launches.v1.codex-ui.schema.json",
+  "title": "Machine-local managed OpenAI Codex workspace launch leases",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "sources"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "sources": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/launchLease" }
+    }
+  },
+  "$defs": {
+    "process": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["processId", "parentProcessId", "createdAtUtc"],
+      "properties": {
+        "processId": { "type": "integer", "minimum": 1 },
+        "parentProcessId": { "type": "integer", "minimum": 0 },
+        "createdAtUtc": { "type": ["string", "null"], "format": "date-time" }
+      }
+    },
+    "launchLease": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "launchId",
+        "sourceId",
+        "workspaceFingerprint",
+        "launcherRelativePath",
+        "launchedAtUtc",
+        "state",
+        "processes",
+        "editorProcessId",
+        "transport",
+        "runtimeReady",
+        "settingsRelativePath",
+        "settingsSha256"
+      ],
+      "properties": {
+        "launchId": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "sourceId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{1,63}$" },
+        "workspaceFingerprint": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "launcherRelativePath": { "const": "tools/open_isolated_vscode.ps1" },
+        "launchedAtUtc": { "type": "string", "format": "date-time" },
+        "state": {
+          "enum": [
+            "managed-starting",
+            "managed-provider-pending",
+            "managed",
+            "managed-launch-unverified"
+          ]
+        },
+        "processes": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/process" }
+        },
+        "editorProcessId": { "type": ["integer", "null"], "minimum": 1 },
+        "transport": { "const": "openai-codex-vscode-ui" },
+        "runtimeReady": { "type": "boolean" },
+        "uiTransportObservedAtUtc": { "type": "string", "format": "date-time" },
+        "codeCommand": { "type": ["string", "null"], "maxLength": 1024 },
+        "codeCliCommand": { "type": ["string", "null"], "maxLength": 1024 },
+        "agentHostInstanceId": { "type": ["string", "null"], "maxLength": 256 },
+        "agentHostInstanceId": { "type": ["string", "null"], "maxLength": 256 },
+        "ahpProtocolVersion": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "providerReady": { "type": "boolean" },
+        "agentHostObservedAtUtc": { "type": "string", "format": "date-time" },
+        "settingsRelativePath": {
+          "const": ".project-runtime/vscode-user-data/User/settings.json"
+        },
+        "settingsSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "vscodeVersion": { "type": ["string", "null"], "maxLength": 64 },
+        "codexExtensionVersion": { "type": ["string", "null"], "maxLength": 64 }
+      }
+    }
+  }
+}

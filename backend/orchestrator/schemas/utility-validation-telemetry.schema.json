@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/utility-validation-telemetry.v1.json",
+  "title": "Utility Validation Telemetry Bundle v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "contractVersion",
+    "runId",
+    "generatedAtUtc",
+    "limits",
+    "observations",
+    "bundleSha256"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "runId": { "$ref": "#/$defs/id" },
+    "generatedAtUtc": { "$ref": "#/$defs/utc" },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["maxObservations", "maxDiagnostics", "maxResultBytes", "maxBundleBytes"],
+      "properties": {
+        "maxObservations": { "const": 512 },
+        "maxDiagnostics": { "const": 16 },
+        "maxResultBytes": { "const": 2097152 },
+        "maxBundleBytes": { "const": 524288 }
+      }
+    },
+    "observations": {
+      "type": "array",
+      "maxItems": 512,
+      "items": { "$ref": "#/$defs/observation" }
+    },
+    "bundleSha256": { "$ref": "#/$defs/sha256" }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$"
+    },
+    "utc": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$",
+      "maxLength": 64
+    },
+    "nullableUtc": {
+      "oneOf": [
+        { "$ref": "#/$defs/utc" },
+        { "type": "null" }
+      ]
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "contractVersion",
+        "observationId",
+        "runId",
+        "scenario",
+        "queryId",
+        "projectionContract",
+        "sequence",
+        "status",
+        "startedAtUtc",
+        "finishedAtUtc",
+        "durationMs",
+        "resultBytes",
+        "sourceTimes",
+        "diagnostics"
+      ],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "contractVersion": { "const": "v0.1.0" },
+        "observationId": { "$ref": "#/$defs/id" },
+        "runId": { "$ref": "#/$defs/id" },
+        "scenario": {
+          "enum": [
+            "live",
+            "delayed",
+            "stale",
+            "source-unavailable",
+            "contradictory",
+            "blocked",
+            "decision-required",
+            "recovered"
+          ]
+        },
+        "queryId": { "$ref": "#/$defs/id" },
+        "projectionContract": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "version"],
+          "properties": {
+            "id": { "$ref": "#/$defs/id" },
+            "version": { "$ref": "#/$defs/id" }
+          }
+        },
+        "sequence": {
+          "oneOf": [
+            { "type": "integer", "minimum": 0 },
+            { "type": "null" }
+          ]
+        },
+        "status": { "enum": ["ready", "stale", "unavailable", "incoherent", "error"] },
+        "startedAtUtc": { "$ref": "#/$defs/utc" },
+        "finishedAtUtc": { "$ref": "#/$defs/utc" },
+        "durationMs": { "type": "number", "minimum": 0 },
+        "resultBytes": { "type": "integer", "minimum": 0, "maximum": 2097152 },
+        "sourceTimes": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["publishedAtUtc", "heartbeatAtUtc", "semanticUpdatedAtUtc"],
+          "properties": {
+            "publishedAtUtc": { "$ref": "#/$defs/nullableUtc" },
+            "heartbeatAtUtc": { "$ref": "#/$defs/nullableUtc" },
+            "semanticUpdatedAtUtc": { "$ref": "#/$defs/nullableUtc" }
+          }
+        },
+        "diagnostics": {
+          "type": "array",
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]{0,63}$"
+          }
+        }
+      }
+    }
+  }
+}

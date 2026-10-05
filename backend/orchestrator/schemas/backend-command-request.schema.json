@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/backend-command-request.v1.json",
+  "title": "Orchestrator Backend Command Request v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "contractVersion",
+    "requestId",
+    "action",
+    "expectedSequence",
+    "sourceId",
+    "taskId",
+    "requestedBy"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "requestId": {
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$"
+    },
+    "action": { "enum": ["stop", "resume", "cancel"] },
+    "expectedSequence": { "type": "integer", "minimum": 0 },
+    "sourceId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{1,63}$"
+    },
+    "taskId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,95}$"
+    },
+    "interventionEventId": {
+      "type": ["string", "null"],
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$"
+    },
+    "requestedBy": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 96,
+      "pattern": "^(?!--)"
+    },
+    "reason": {
+      "type": ["string", "null"],
+      "maxLength": 512,
+      "pattern": "^(?!--)"
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "action": { "const": "stop" } }, "required": ["action"] },
+      "then": {
+        "properties": { "interventionEventId": { "type": "null" } }
+      },
+      "else": {
+        "required": ["interventionEventId"],
+        "properties": { "interventionEventId": { "type": "string" } }
+      }
+    }
+  ]
+}

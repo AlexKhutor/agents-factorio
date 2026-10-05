@@ -1,0 +1,235 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/application-change-proposal.v0.1.0.json",
+  "title": "Application Change Proposal v0.1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "contractVersion", "proposalId", "proposalRevision",
+    "previousProposalSha256", "proposer", "sourceSequence", "rationaleSources",
+    "affectedResources", "operations", "preview", "createdAtUtc", "proposalSha256"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "proposalId": { "$ref": "#/$defs/id" },
+    "proposalRevision": {
+      "type": "integer", "minimum": 1, "maximum": 9007199254740991
+    },
+    "previousProposalSha256": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/sha256" }]
+    },
+    "proposer": { "$ref": "#/$defs/proposer" },
+    "sourceSequence": {
+      "type": "integer", "minimum": 0, "maximum": 9007199254740991
+    },
+    "rationaleSources": {
+      "type": "array", "minItems": 1, "maxItems": 32,
+      "items": { "$ref": "#/$defs/rationale" }
+    },
+    "affectedResources": {
+      "type": "array", "minItems": 1, "maxItems": 32,
+      "items": { "$ref": "#/$defs/affectedResource" }
+    },
+    "operations": {
+      "type": "array", "minItems": 1, "maxItems": 128,
+      "items": { "$ref": "#/$defs/operation" }
+    },
+    "preview": { "$ref": "#/$defs/preview" },
+    "createdAtUtc": { "type": "string", "format": "date-time" },
+    "proposalSha256": { "$ref": "#/$defs/sha256" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "proposalRevision": { "const": 1 } } },
+      "then": { "properties": { "previousProposalSha256": { "type": "null" } } },
+      "else": {
+        "properties": {
+          "proposalRevision": { "type": "integer", "minimum": 2 },
+          "previousProposalSha256": { "$ref": "#/$defs/sha256" }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$"
+    },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "proposer": {
+      "allOf": [
+        { "$ref": "https://isolate-vscode.local/schemas/application-actor-ref.v1.json" },
+        {
+          "type": "object",
+          "properties": {
+            "actorType": { "enum": ["local-operator", "controller", "child-agent"] }
+          }
+        }
+      ]
+    },
+    "rationale": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provenanceId", "kind", "sourceId", "sourceSha256"],
+      "properties": {
+        "provenanceId": { "$ref": "#/$defs/id" },
+        "kind": { "enum": ["owner-comment", "task-plan", "review-finding"] },
+        "sourceId": { "$ref": "#/$defs/id" },
+        "sourceSha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "affectedResource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "changeId", "changeKind", "resource", "baseRevision", "baseContentSha256",
+        "proposedContentSha256", "operationIds"
+      ],
+      "properties": {
+        "changeId": { "$ref": "#/$defs/id" },
+        "changeKind": { "enum": ["create", "update", "delete"] },
+        "resource": {
+          "allOf": [
+            { "$ref": "https://isolate-vscode.local/schemas/application-resource-ref.v1.json" },
+            {
+              "type": "object",
+              "properties": { "resourceKind": { "const": "project-file" } }
+            }
+          ]
+        },
+        "baseRevision": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/revision" }
+          ]
+        },
+        "baseContentSha256": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/sha256" }]
+        },
+        "proposedContentSha256": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/sha256" }]
+        },
+        "operationIds": {
+          "type": "array", "minItems": 1, "maxItems": 128, "uniqueItems": true,
+          "items": { "$ref": "#/$defs/id" }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "changeKind": { "const": "create" } } },
+          "then": {
+            "properties": {
+              "baseRevision": { "type": "null" },
+              "baseContentSha256": { "type": "null" },
+              "proposedContentSha256": { "$ref": "#/$defs/sha256" }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "changeKind": { "const": "update" } } },
+          "then": {
+            "properties": {
+              "baseRevision": {
+                "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/revision"
+              },
+              "baseContentSha256": { "$ref": "#/$defs/sha256" },
+              "proposedContentSha256": { "$ref": "#/$defs/sha256" }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "changeKind": { "const": "delete" } } },
+          "then": {
+            "properties": {
+              "baseRevision": {
+                "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/revision"
+              },
+              "baseContentSha256": { "$ref": "#/$defs/sha256" },
+              "proposedContentSha256": { "type": "null" }
+            }
+          }
+        }
+      ]
+    },
+    "operation": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["operationId", "changeId", "kind", "content", "contentSha256"],
+          "properties": {
+            "operationId": { "$ref": "#/$defs/id" },
+            "changeId": { "$ref": "#/$defs/id" },
+            "kind": { "const": "create-text" },
+            "content": {
+              "type": "string", "maxLength": 262144,
+              "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f]*$"
+            },
+            "contentSha256": { "$ref": "#/$defs/sha256" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "operationId", "changeId", "kind", "startByte", "endByte",
+            "expectedSha256", "replacement", "replacementSha256"
+          ],
+          "properties": {
+            "operationId": { "$ref": "#/$defs/id" },
+            "changeId": { "$ref": "#/$defs/id" },
+            "kind": { "const": "replace-text" },
+            "startByte": {
+              "type": "integer", "minimum": 0, "maximum": 9007199254740991
+            },
+            "endByte": {
+              "type": "integer", "minimum": 0, "maximum": 9007199254740991
+            },
+            "expectedSha256": { "$ref": "#/$defs/sha256" },
+            "replacement": {
+              "type": "string", "maxLength": 262144,
+              "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f]*$"
+            },
+            "replacementSha256": { "$ref": "#/$defs/sha256" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["operationId", "changeId", "kind", "expectedContentSha256"],
+          "properties": {
+            "operationId": { "$ref": "#/$defs/id" },
+            "changeId": { "$ref": "#/$defs/id" },
+            "kind": { "const": "delete-resource" },
+            "expectedContentSha256": { "$ref": "#/$defs/sha256" }
+          }
+        }
+      ]
+    },
+    "preview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion", "contractVersion", "previewId", "parametersSha256",
+        "resourceCount", "operationCount", "createCount", "updateCount",
+        "deleteCount", "replacementBytes", "generatedAtUtc", "previewSha256"
+      ],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "contractVersion": { "const": "v0.1.0" },
+        "previewId": { "$ref": "#/$defs/id" },
+        "parametersSha256": { "$ref": "#/$defs/sha256" },
+        "resourceCount": { "type": "integer", "minimum": 1, "maximum": 32 },
+        "operationCount": { "type": "integer", "minimum": 1, "maximum": 128 },
+        "createCount": { "type": "integer", "minimum": 0, "maximum": 32 },
+        "updateCount": { "type": "integer", "minimum": 0, "maximum": 32 },
+        "deleteCount": { "type": "integer", "minimum": 0, "maximum": 32 },
+        "replacementBytes": {
+          "type": "integer", "minimum": 0, "maximum": 1048576
+        },
+        "generatedAtUtc": { "type": "string", "format": "date-time" },
+        "previewSha256": { "$ref": "#/$defs/sha256" }
+      }
+    }
+  }
+}

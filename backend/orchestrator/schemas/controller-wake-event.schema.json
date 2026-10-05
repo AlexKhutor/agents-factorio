@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/controller-wake-event.v1.schema.json",
+  "title": "Controller wake event v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "eventId", "eventType", "sourceId", "taskId",
+    "taskSha256", "returnBindingId", "status", "summary", "report",
+    "signal", "occurredAtUtc"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "eventId": { "type": "string", "format": "uuid" },
+    "eventType": {
+      "enum": [
+        "child-report-ready", "child-report-missing",
+        "child-intervention-required", "child-task-cancelled",
+        "child-observer-failed"
+      ]
+    },
+    "sourceId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{1,63}$" },
+    "taskId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9.-]{2,95}$" },
+    "taskSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "returnBindingId": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "status": { "enum": ["completed", "blocked", "failed", "interrupted"] },
+    "summary": { "type": "string", "minLength": 1, "maxLength": 512 },
+    "report": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "sha256"],
+          "properties": {
+            "path": { "type": "string", "pattern": "^\\.orchestrator/reports/outbox/", "maxLength": 512 },
+            "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+          }
+        }
+      ]
+    },
+    "signal": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["sha256"],
+          "properties": { "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" } }
+        }
+      ]
+    },
+    "occurredAtUtc": { "type": "string", "format": "date-time" }
+  }
+}

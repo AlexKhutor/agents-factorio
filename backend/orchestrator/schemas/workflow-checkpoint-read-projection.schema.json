@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/workflow-checkpoint-read-projection.v1.json",
+  "title": "Task-scoped workflow checkpoint read projection v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "contractVersion", "sourceId", "taskId",
+    "checkpoint", "causalEvents"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "sourceId": { "$ref": "#/$defs/id" },
+    "taskId": { "$ref": "#/$defs/id" },
+    "checkpoint": { "$ref": "workflow-checkpoint.schema.json" },
+    "causalEvents": {
+      "type": "array",
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": { "$ref": "causal-event-envelope.schema.json" }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$"
+    }
+  }
+}

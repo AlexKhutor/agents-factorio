@@ -1,0 +1,294 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/backend-capabilities.v1.json",
+  "title": "Orchestrator Backend Consumer Capabilities v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "contractVersion",
+    "service",
+    "transport",
+    "features",
+    "artifacts",
+    "queries",
+    "consistency",
+    "timing",
+    "limits",
+    "resources"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "service": { "const": "isolate-vscode-orchestrator" },
+    "transport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "access", "base", "descriptorPath"],
+      "properties": {
+        "kind": { "const": "filesystem-json" },
+        "access": { "const": "read-only" },
+        "base": { "const": "controller-workspace" },
+        "descriptorPath": { "$ref": "#/$defs/relativePath" }
+      }
+    },
+    "features": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["controlProjection", "attentionProjection", "agentStatistics", "interventions", "commandAdapter"],
+      "properties": {
+        "controlProjection": { "const": true },
+        "attentionProjection": { "const": true },
+        "agentStatistics": { "const": true },
+        "interventions": { "const": true },
+        "commandAdapter": { "type": "boolean" },
+        "workflowCheckpointReads": { "type": "boolean" }
+      }
+    },
+    "commandAdapter": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["contractVersion", "transport", "target", "actions", "consistency", "limits", "resources"],
+          "properties": {
+            "contractVersion": { "const": "v0.1.0" },
+            "transport": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["kind", "access", "base", "entrypointPath", "input", "output"],
+              "properties": {
+                "kind": { "const": "local-process-json" },
+                "access": { "const": "write" },
+                "base": { "const": "controller-workspace" },
+                "entrypointPath": { "$ref": "#/$defs/relativePath" },
+                "input": { "const": "stdin-json" },
+                "output": { "const": "stdout-json" }
+              }
+            },
+            "target": { "const": "managed-child-codex-task" },
+            "actions": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 3,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["id", "requires", "outcome"],
+                "properties": {
+                  "id": { "enum": ["stop", "resume", "cancel"] },
+                  "requires": {
+                    "type": "array",
+                    "minItems": 5,
+                    "uniqueItems": true,
+                    "items": {
+                      "enum": ["requestId", "expectedSequence", "sourceId", "taskId", "interventionEventId", "requestedBy"]
+                    }
+                  },
+                  "outcome": { "enum": ["stop_requested", "resume_authorized", "cancelled"] }
+                }
+              }
+            },
+            "consistency": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["expectedCursor", "currentCursor", "requireFreshProjection", "requireExactInterventionEvent", "duplicateRequestPolicy", "uncertainRequestPolicy"],
+              "properties": {
+                "expectedCursor": { "const": "expectedSequence" },
+                "currentCursor": { "const": "control.sequence" },
+                "requireFreshProjection": { "const": true },
+                "requireExactInterventionEvent": { "const": true },
+                "duplicateRequestPolicy": { "const": "replay-completed-result" },
+                "uncertainRequestPolicy": { "const": "fail-closed" }
+              }
+            },
+            "limits": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["requestBytes", "reasonCharacters"],
+              "properties": {
+                "requestBytes": { "type": "integer", "minimum": 1, "maximum": 65536 },
+                "reasonCharacters": { "type": "integer", "minimum": 1, "maximum": 512 }
+              }
+            },
+            "resources": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["documentationPath", "requestSchemaPath", "resultSchemaPath"],
+              "properties": {
+                "documentationPath": { "$ref": "#/$defs/relativePath" },
+                "requestSchemaPath": { "$ref": "#/$defs/relativePath" },
+                "resultSchemaPath": { "$ref": "#/$defs/relativePath" }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["control", "attention"],
+      "properties": {
+        "control": { "$ref": "#/$defs/artifact" },
+        "attention": {
+          "allOf": [
+            { "$ref": "#/$defs/artifact" },
+            {
+              "type": "object",
+              "required": ["modelVersion"],
+              "properties": { "modelVersion": { "const": "v0.1.0" } }
+            }
+          ]
+        },
+        "workflowCheckpointRead": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["basePath", "pathTemplate", "schema"],
+          "properties": {
+            "basePath": { "$ref": "#/$defs/relativePath" },
+            "pathTemplate": { "const": "{sourceId}/{taskId}.json" },
+            "schema": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["path", "id", "version"],
+              "properties": {
+                "path": { "$ref": "#/$defs/relativePath" },
+                "id": { "const": "https://isolate-vscode.local/schemas/workflow-checkpoint-read-projection.v1.json" },
+                "version": { "const": 1 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "queries": {
+      "type": "array",
+      "minItems": 8,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "source"],
+        "properties": {
+          "id": { "enum": ["capabilities", "overview", "snapshot", "tasks", "agents", "agent-statistics", "attention", "interventions", "workflow-checkpoint", "causal-events"] },
+          "source": { "type": "string", "minLength": 1, "maxLength": 96 },
+          "requires": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": { "enum": ["agentId", "sourceId", "taskId"] }
+          }
+        }
+      }
+    },
+    "consistency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["controlCursor", "attentionCursor", "attentionTimestamp", "requireMatchingSequence", "readOrder"],
+      "properties": {
+        "controlCursor": { "const": "sequence" },
+        "attentionCursor": { "const": "source.controlSequence" },
+        "attentionTimestamp": { "const": "source.controlGeneratedAtUtc" },
+        "requireMatchingSequence": { "const": true },
+        "readOrder": {
+          "type": "array",
+          "prefixItems": [{ "const": "control" }, { "const": "attention" }, { "const": "control" }],
+          "items": false
+        }
+      }
+    },
+    "timing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["publicationIntervalMs", "projectionStaleAfterMs", "workerHeartbeatMinimumMs", "workerHeartbeatDefaultMs"],
+      "properties": {
+        "publicationIntervalMs": { "type": "integer", "minimum": 10000, "maximum": 15000 },
+        "projectionStaleAfterMs": { "type": "integer", "minimum": 30000, "maximum": 45000 },
+        "workerHeartbeatMinimumMs": { "const": 30000 },
+        "workerHeartbeatDefaultMs": { "const": 60000 }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["descriptorBytes", "controlBytes", "attentionBytes"],
+      "properties": {
+        "descriptorBytes": { "type": "integer", "minimum": 1 },
+        "controlBytes": { "type": "integer", "minimum": 1 },
+        "attentionBytes": { "type": "integer", "minimum": 1 },
+        "workflowCheckpointReadBytes": { "type": "integer", "minimum": 1, "maximum": 524288 }
+      }
+    },
+    "resources": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["documentationPath", "clientModulePath", "clientCliPath", "resultSchemaPath"],
+      "properties": {
+        "documentationPath": { "$ref": "#/$defs/relativePath" },
+        "clientModulePath": { "$ref": "#/$defs/relativePath" },
+        "clientCliPath": { "$ref": "#/$defs/relativePath" },
+        "resultSchemaPath": { "$ref": "#/$defs/relativePath" }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "features": {
+            "properties": { "commandAdapter": { "const": true } },
+            "required": ["commandAdapter"]
+          }
+        }
+      },
+      "then": {
+        "required": ["commandAdapter"],
+        "properties": { "commandAdapter": { "type": "object" } }
+      },
+      "else": { "properties": { "commandAdapter": { "type": "null" } } }
+    },
+    {
+      "if": {
+        "properties": {
+          "features": {
+            "properties": { "workflowCheckpointReads": { "const": true } },
+            "required": ["workflowCheckpointReads"]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "artifacts": { "required": ["control", "attention", "workflowCheckpointRead"] },
+          "limits": { "required": ["descriptorBytes", "controlBytes", "attentionBytes", "workflowCheckpointReadBytes"] }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "not": { "pattern": "^(?:[A-Za-z]:[\\\\/]|[\\\\/]{1,2}|.*(?:^|[\\\\/])\\.\\.(?:[\\\\/]|$))" }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "schema"],
+      "properties": {
+        "path": { "$ref": "#/$defs/relativePath" },
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "id", "version"],
+          "properties": {
+            "path": { "$ref": "#/$defs/relativePath" },
+            "id": { "type": "string", "format": "uri" },
+            "version": { "const": 1 }
+          }
+        },
+        "modelVersion": { "type": "string" }
+      }
+    }
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/workspace-endpoint.schema.json",
+  "title": "Portable workspace endpoint",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "contractVersion", "sourceId", "displayName", "ownerId", "purpose",
+    "workspaceId", "root", "featureRoot", "repositoryPolicy", "providerRoute",
+    "executionProfile", "taskInbox", "reportOutbox", "templateVersion", "kitVersion",
+    "kitProfile", "executorState",
+    "requestSha256"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "sourceId": { "$ref": "#/$defs/identifier" },
+    "displayName": { "type": "string", "minLength": 1, "maxLength": 160 },
+    "ownerId": { "$ref": "#/$defs/identifier" },
+    "purpose": { "type": "string", "minLength": 1, "maxLength": 4096 },
+    "workspaceId": { "$ref": "#/$defs/identifier" },
+    "root": { "const": "." },
+    "featureRoot": { "$ref": "#/$defs/segment" },
+    "repositoryPolicy": { "enum": ["new-local", "existing-local", "preserve-existing"] },
+    "providerRoute": { "$ref": "#/$defs/route" },
+    "executionProfile": { "$ref": "#/$defs/profile" },
+    "taskInbox": { "const": ".orchestrator/tasks/inbox" },
+    "reportOutbox": { "const": ".orchestrator/reports/outbox" },
+    "templateVersion": { "type": "string", "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "kitVersion": { "type": "string", "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "kitProfile": { "enum": ["codex", "claude-handoff", "foreign-provider-handoff"] },
+    "executorState": { "enum": ["installed", "foreign-owner-required"] },
+    "requestSha256": { "$ref": "#/$defs/sha256" }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$"
+    },
+    "segment": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$",
+      "not": { "enum": [".", ".."] }
+    },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "model", "reasoningEffort", "fallbackPolicy"],
+      "properties": {
+        "provider": { "$ref": "#/$defs/identifier" },
+        "model": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "reasoningEffort": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "fallbackPolicy": { "const": "deny" }
+      }
+    },
+    "capability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operation", "support", "gate"],
+      "properties": {
+        "operation": {
+          "enum": [
+            "prepare", "open", "close", "listSessions", "bindSession", "listProfiles",
+            "submitTask", "observeStart", "stopExecution", "returnReport"
+          ]
+        },
+        "support": {
+          "enum": ["supported", "conditional", "foreign-owner-required", "unsupported"]
+        },
+        "gate": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/identifier" }] }
+      }
+    },
+    "route": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "routeId", "provider", "launchSurface", "executionAdapter",
+        "coordinationProfile", "executorState", "capabilities", "limitations"
+      ],
+      "properties": {
+        "routeId": { "$ref": "#/$defs/identifier" },
+        "provider": { "$ref": "#/$defs/identifier" },
+        "launchSurface": { "$ref": "#/$defs/identifier" },
+        "executionAdapter": { "$ref": "#/$defs/identifier" },
+        "coordinationProfile": {
+          "enum": ["codex", "claude-handoff", "foreign-provider-handoff"]
+        },
+        "executorState": { "enum": ["installed", "foreign-owner-required"] },
+        "capabilities": {
+          "type": "array", "minItems": 10, "maxItems": 10, "uniqueItems": true,
+          "items": { "$ref": "#/$defs/capability" }
+        },
+        "limitations": {
+          "type": "array", "maxItems": 32, "uniqueItems": true,
+          "items": { "$ref": "#/$defs/identifier" }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/adapter-common.v1.json",
+  "title": "Adapter contract common definitions v1",
+  "$defs": {
+    "id": { "type": "string", "minLength": 1, "maxLength": 160, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$" },
+    "version": { "type": "string", "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "utc": { "type": "string", "format": "date-time", "pattern": "Z$" },
+    "family": { "enum": ["execution-provider", "semantic-work-source"] },
+    "operation": {
+      "enum": [
+        "discoverCapabilities", "listModels", "listExecutions", "readExecution",
+        "observeLifecycle", "createSession", "listThreads", "readThread",
+        "createThread", "forkThread", "startExecution",
+        "interruptExecution", "resumeExecution", "cancelExecution", "prepareContext",
+        "compactContext", "getUsage", "openVisibleSurface", "listWorkstreams",
+        "readWorkstream", "listWorkItems", "readWorkItem", "listLinkedExecutions",
+        "listAttentionItems", "listArtifacts", "readProvenance"
+      ]
+    },
+    "identity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["adapterId", "adapterFamily", "adapterVersion", "sourceId", "runtimeInstanceId"],
+      "properties": {
+        "adapterId": { "$ref": "#/$defs/id" },
+        "adapterFamily": { "$ref": "#/$defs/family" },
+        "adapterVersion": { "$ref": "#/$defs/version" },
+        "sourceId": { "$ref": "#/$defs/id" },
+        "runtimeInstanceId": { "$ref": "#/$defs/id" }
+      }
+    },
+    "extensionHeader": {
+      "type": "object", "additionalProperties": false,
+      "required": ["extensionId", "contractVersion"],
+      "properties": {
+        "extensionId": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+){1,15}$" },
+        "contractVersion": { "$ref": "#/$defs/version" }
+      }
+    },
+    "requirement": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "operation", "acceptableSupport", "requiredGuarantees", "acceptableVisibility",
+        "acceptableInterruptBehavior", "requiredRecovery", "minimumLimits"
+      ],
+      "properties": {
+        "operation": { "$ref": "#/$defs/operation" },
+        "acceptableSupport": {
+          "type": "array", "minItems": 1, "maxItems": 5, "uniqueItems": true,
+          "items": { "enum": ["native", "emulated", "experimental", "degraded"] }
+        },
+        "requiredGuarantees": {
+          "type": "array", "maxItems": 11, "uniqueItems": true,
+          "items": { "enum": ["command-acceptance", "accepted-started-separate", "accepted-terminal-separate", "provider-observed-start", "provider-observed-terminal", "ordered-lifecycle", "cursor-replay", "exact-native-identity", "single-writer-required", "exact-task-binding", "exact-profile-binding"] }
+        },
+        "acceptableVisibility": {
+          "type": "array", "minItems": 1, "maxItems": 4, "uniqueItems": true,
+          "items": { "enum": ["provider-observed", "platform-visible", "headless", "none"] }
+        },
+        "acceptableInterruptBehavior": {
+          "type": "array", "minItems": 1, "maxItems": 5, "uniqueItems": true,
+          "items": { "enum": ["not-applicable", "unsupported", "cooperative", "immediate", "provider-defined"] }
+        },
+        "requiredRecovery": {
+          "type": "array", "maxItems": 5, "uniqueItems": true,
+          "items": { "enum": ["none", "reconnect", "cursor-replay", "resume", "read-after-disconnect"] }
+        },
+        "minimumLimits": {
+          "type": "object", "maxProperties": 32,
+          "propertyNames": { "pattern": "^[A-Za-z][A-Za-z0-9_]{0,95}$" },
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "taskBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sourceId", "taskId", "taskSha256"],
+      "properties": {
+        "sourceId": { "$ref": "#/$defs/id" },
+        "taskId": { "$ref": "#/$defs/id" },
+        "taskSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    },
+    "profile": {
+      "type": "object", "additionalProperties": false,
+      "required": ["model", "reasoningEffort", "fallbackPolicy"],
+      "properties": {
+        "model": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "reasoningEffort": { "type": "string", "minLength": 1, "maxLength": 32 },
+        "fallbackPolicy": { "const": "deny" }
+      }
+    },
+    "operationIdentity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "operationId", "correlationId"],
+      "properties": {
+        "name": { "$ref": "#/$defs/operation" },
+        "operationId": { "$ref": "#/$defs/id" },
+        "correlationId": { "$ref": "#/$defs/id" }
+      }
+    }
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/deterministic-acceptance.v0.1.0.json",
+  "title": "Deterministic Report Acceptance v0.1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "contractVersion",
+    "operation",
+    "authority",
+    "sourceId",
+    "taskId",
+    "taskSha256",
+    "reportSha256",
+    "reportStatus",
+    "sourceRevision",
+    "result",
+    "checks",
+    "evaluatedAtUtc"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "operation": { "const": "accept" },
+    "authority": { "const": "control-queue-state" },
+    "sourceId": { "$ref": "#/$defs/id" },
+    "taskId": { "$ref": "#/$defs/id" },
+    "taskSha256": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/sha256" }
+      ]
+    },
+    "reportSha256": { "$ref": "#/$defs/sha256" },
+    "reportStatus": { "const": "completed" },
+    "sourceRevision": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "result": { "const": "passed" },
+    "checks": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 32,
+      "items": {
+        "type": "object",
+        "required": ["id", "status"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{1,63}$" },
+          "status": { "const": "passed" }
+        }
+      }
+    },
+    "evaluatedAtUtc": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,95}$" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

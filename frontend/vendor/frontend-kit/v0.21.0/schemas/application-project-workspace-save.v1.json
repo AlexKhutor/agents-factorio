@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/application-project-workspace-save.v1.json",
+  "title": "Bound text file save v0.1.0",
+  "$ref": "#/$defs/request",
+  "$defs": {
+    "id": { "type": "string", "minLength": 1, "maxLength": 160,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$" },
+    "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "path": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "request": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "contractVersion", "operationId", "input"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "contractVersion": { "const": "v0.1.0" },
+        "operationId": { "const": "mutation.project-workspace.save" },
+        "input": { "type": "object", "additionalProperties": false,
+          "required": ["projectId", "path", "expectedSha256", "text", "operationId"],
+          "properties": {
+            "projectId": { "$ref": "#/$defs/id" },
+            "path": { "$ref": "#/$defs/path" },
+            "expectedSha256": { "$ref": "#/$defs/hash" },
+            "text": { "type": "string", "maxLength": 1048576 },
+            "operationId": { "$ref": "#/$defs/id" }
+          }
+        }
+      }
+    },
+    "receipt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "contractVersion", "projectId", "path", "operationId",
+        "previousSha256", "contentSha256", "bytesWritten", "completedAtUtc"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "contractVersion": { "const": "v0.1.0" },
+        "projectId": { "$ref": "#/$defs/id" },
+        "path": { "$ref": "#/$defs/path" },
+        "operationId": { "$ref": "#/$defs/id" },
+        "previousSha256": { "$ref": "#/$defs/hash" },
+        "contentSha256": { "$ref": "#/$defs/hash" },
+        "bytesWritten": { "type": "integer", "minimum": 0, "maximum": 1048576 },
+        "completedAtUtc": { "type": "string", "format": "date-time", "maxLength": 64 }
+      }
+    }
+  }
+}

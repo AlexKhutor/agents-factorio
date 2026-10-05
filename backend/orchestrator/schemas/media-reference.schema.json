@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/media-reference.schema.json",
+  "title": "Project media reference",
+  "type": "object",
+  "required": ["kind", "path"],
+  "properties": {
+    "kind": {
+      "const": "image"
+    },
+    "path": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Portable path relative to the worker workspace."
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[A-Fa-f0-9]{64}$"
+    },
+    "label": {
+      "type": "string",
+      "maxLength": 256
+    }
+  },
+  "additionalProperties": false
+}

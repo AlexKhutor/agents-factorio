@@ -1,0 +1,78 @@
+{
+  "input": {
+    "fieldId": "coordination.task.state",
+    "expectedAuthority": {
+      "schemaVersion": 1,
+      "authorityType": "coordination-core",
+      "sourceId": "serialized-control-queue",
+      "externalId": "task-m1-5",
+      "contractVersion": "v0.1.0"
+    },
+    "observations": [
+      {
+        "observationId": "coordination-state-running",
+        "authority": {
+          "schemaVersion": 1,
+          "authorityType": "coordination-core",
+          "sourceId": "serialized-control-queue",
+          "externalId": "task-m1-5",
+          "contractVersion": "v0.1.0"
+        },
+        "value": {
+          "state": "running"
+        },
+        "observedAtUtc": "2026-08-30T09:59:35.000Z",
+        "evidenceRefs": [
+          {
+            "schemaVersion": 1,
+            "kind": "artifact",
+            "relationship": "supports",
+            "authority": {
+              "schemaVersion": 1,
+              "authorityType": "coordination-core",
+              "sourceId": "serialized-control-queue",
+              "externalId": "task-m1-5",
+              "contractVersion": "v0.1.0"
+            },
+            "locator": ".orchestrator/queue/task-m1-5-running.json"
+          }
+        ]
+      },
+      {
+        "observationId": "coordination-state-completed",
+        "authority": {
+          "schemaVersion": 1,
+          "authorityType": "coordination-core",
+          "sourceId": "serialized-control-queue",
+          "externalId": "task-m1-5",
+          "contractVersion": "v0.1.0"
+        },
+        "value": {
+          "state": "completed"
+        },
+        "observedAtUtc": "2026-08-30T09:59:40.000Z",
+        "evidenceRefs": [
+          {
+            "schemaVersion": 1,
+            "kind": "artifact",
+            "relationship": "supports",
+            "authority": {
+              "schemaVersion": 1,
+              "authorityType": "coordination-core",
+              "sourceId": "serialized-control-queue",
+              "externalId": "task-m1-5",
+              "contractVersion": "v0.1.0"
+            },
+            "locator": ".orchestrator/queue/task-m1-5-completed.json"
+          }
+        ]
+      }
+    ],
+    "availability": "available",
+    "reconciledAtUtc": "2026-08-30T10:00:00.000Z",
+    "staleAfterSeconds": 60,
+    "freshnessTimestampField": "observedAtUtc",
+    "futureSkewSeconds": 5
+  },
+  "expectedStatus": "contradictory"
+}

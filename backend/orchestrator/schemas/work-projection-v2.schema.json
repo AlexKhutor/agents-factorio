@@ -1,0 +1,690 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/work-projection-v2.v2.json",
+  "title": "Renderer-neutral Work Projection v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "contractVersion",
+    "projectionId",
+    "sequence",
+    "publishedAtUtc",
+    "limits",
+    "layers",
+    "projectionSha256"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 2 },
+    "contractVersion": { "const": "v0.2.0" },
+    "projectionId": { "$ref": "#/$defs/identifier" },
+    "sequence": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "publishedAtUtc": { "$ref": "#/$defs/utc" },
+    "limits": { "$ref": "#/$defs/limits" },
+    "layers": { "$ref": "#/$defs/layers" },
+    "projectionSha256": { "$ref": "#/$defs/sha256" }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$"
+    },
+    "field": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$",
+      "not": {
+        "pattern": "(?:(?:^|[.-])(?:base64|body|bytes|content|contents|credential|credentials|history|message|messages|password|prompt|prompts|rawdiagnostic|rawlog|rawmedia|reasoning|secret|sourcecode|text|transcript|transcripts|turncontext|animation|card|color|controllerbinding|coordinates|focus|font|gaze|geometry|gesture|grouping|handstate|inputmapping|layout|openxr|opacity|physicalinput|polling|position|refreshcadence|refreshinterval|roomstate|rotation|scale|sound|spatialstate|transform|typography|vrgeometry)(?:$|[.-])|(?:^|[.-])provider[.-](?:content|history|payload|private)(?:$|[.-]))"
+      }
+    },
+    "reasonCode": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{0,63}$"
+    },
+    "utc": {
+      "type": "string",
+      "maxLength": 64,
+      "format": "date-time",
+      "pattern": "Z$"
+    },
+    "nullableUtc": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/utc" }
+      ]
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "nullableSha256": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/sha256" }
+      ]
+    },
+    "scalar": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "boolean" },
+        { "type": "number" },
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "not": {
+            "pattern": "^\\s*(?:data:(?:image|audio|video|application/octet-stream)/|blob:)"
+          }
+        }
+      ]
+    },
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "sourceId", "id"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32
+        },
+        "sourceId": { "$ref": "#/$defs/identifier" },
+        "id": { "$ref": "#/$defs/identifier" }
+      }
+    },
+    "targetRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["layer", "kind", "sourceId", "id"],
+      "properties": {
+        "layer": {
+          "enum": ["work", "execution", "artifact", "attention", "surface"]
+        },
+        "kind": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32
+        },
+        "sourceId": { "$ref": "#/$defs/identifier" },
+        "id": { "$ref": "#/$defs/identifier" }
+      }
+    },
+    "projectionExternalRef": {
+      "allOf": [
+        { "$ref": "external-reference.schema.json" },
+        {
+          "type": "object",
+          "allOf": [
+            {
+              "if": {
+                "properties": { "kind": { "const": "artifact" } },
+                "required": ["kind"]
+              },
+              "then": {
+                "properties": {
+                  "locator": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 512,
+                    "pattern": "^[A-Za-z0-9._-][A-Za-z0-9._/-]{0,511}$",
+                    "not": { "pattern": "(?:^|/)\\.\\.(?:/|$)" }
+                  },
+                  "authority": {
+                    "allOf": [
+                      { "$ref": "authority-reference.schema.json" },
+                      { "type": "object", "required": ["artifactSha256"] }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "kind": { "enum": ["semantic-workstream", "semantic-work-item"] }
+                },
+                "required": ["kind"]
+              },
+              "then": {
+                "properties": {
+                  "authority": {
+                    "type": "object",
+                    "properties": {
+                      "authorityType": { "const": "external-semantic-source" }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "provider-thread", "provider-turn", "provider-item", "provider-subagent"
+                    ]
+                  }
+                },
+                "required": ["kind"]
+              },
+              "then": {
+                "properties": {
+                  "authority": {
+                    "type": "object",
+                    "properties": { "authorityType": { "const": "provider" } }
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": { "kind": { "const": "presentation-surface" } },
+                "required": ["kind"]
+              },
+              "then": {
+                "properties": {
+                  "authority": {
+                    "type": "object",
+                    "properties": { "authorityType": { "const": "presentation" } }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "externalRefs": {
+      "type": "array",
+      "maxItems": 16,
+      "items": { "$ref": "#/$defs/projectionExternalRef" }
+    },
+    "fact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "factId",
+        "subject",
+        "field",
+        "value",
+        "targetRefs",
+        "externalRefs"
+      ],
+      "properties": {
+        "factId": { "$ref": "#/$defs/identifier" },
+        "subject": { "$ref": "#/$defs/subject" },
+        "field": { "$ref": "#/$defs/field" },
+        "value": { "$ref": "#/$defs/scalar" },
+        "targetRefs": {
+          "type": "array",
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/targetRef" }
+        },
+        "externalRefs": { "$ref": "#/$defs/externalRefs" }
+      }
+    },
+    "workFact": {
+      "allOf": [
+        { "$ref": "#/$defs/fact" },
+        {
+          "type": "object",
+          "properties": {
+            "subject": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "enum": [
+                    "work-item", "task", "goal", "feature", "issue",
+                    "decision", "dependency"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "executionFact": {
+      "allOf": [
+        { "$ref": "#/$defs/fact" },
+        {
+          "type": "object",
+          "properties": {
+            "subject": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "enum": [
+                    "execution", "execution-actor", "provider-session",
+                    "provider-thread", "provider-turn", "provider-run",
+                    "provider-subagent"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "artifactFact": {
+      "allOf": [
+        { "$ref": "#/$defs/fact" },
+        {
+          "type": "object",
+          "properties": {
+            "subject": {
+              "type": "object",
+              "properties": { "kind": { "const": "artifact" } }
+            }
+          }
+        }
+      ]
+    },
+    "attentionFact": {
+      "allOf": [
+        { "$ref": "#/$defs/fact" },
+        {
+          "type": "object",
+          "properties": {
+            "subject": {
+              "type": "object",
+              "properties": { "kind": { "const": "attention-event" } }
+            }
+          }
+        }
+      ]
+    },
+    "surfaceFact": {
+      "allOf": [
+        { "$ref": "#/$defs/fact" },
+        {
+          "type": "object",
+          "properties": {
+            "subject": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "enum": ["application", "window", "document", "thread", "file"]
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "evidenceRef": {
+      "allOf": [
+        { "$ref": "#/$defs/projectionExternalRef" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "artifact" },
+            "locator": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512,
+              "pattern": "^[A-Za-z0-9._-][A-Za-z0-9._/-]{0,511}$",
+              "not": { "pattern": "(?:^|/)\\.\\.(?:/|$)" }
+            },
+            "authority": {
+              "allOf": [
+                { "$ref": "authority-reference.schema.json" },
+                {
+                  "type": "object",
+                  "required": ["artifactSha256"]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "summaryDerivation": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "properties": { "kind": { "const": "source" } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "properties": { "kind": { "const": "deterministic" } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "provider", "model", "reasoningEffort"],
+          "properties": {
+            "kind": { "const": "model-derived" },
+            "provider": { "type": "string", "minLength": 1, "maxLength": 96 },
+            "model": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "reasoningEffort": { "type": "string", "minLength": 1, "maxLength": 32 }
+          }
+        }
+      ]
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceSequence",
+        "sourceArtifactSha256",
+        "occurredAtUtc",
+        "observedAtUtc",
+        "publishedAtUtc",
+        "heartbeatAtUtc",
+        "semanticUpdatedAtUtc",
+        "evidenceRefs",
+        "causalEventIds"
+      ],
+      "properties": {
+        "sourceSequence": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          ]
+        },
+        "sourceArtifactSha256": { "$ref": "#/$defs/nullableSha256" },
+        "occurredAtUtc": { "$ref": "#/$defs/nullableUtc" },
+        "observedAtUtc": { "$ref": "#/$defs/utc" },
+        "publishedAtUtc": { "$ref": "#/$defs/nullableUtc" },
+        "heartbeatAtUtc": { "$ref": "#/$defs/nullableUtc" },
+        "semanticUpdatedAtUtc": { "$ref": "#/$defs/nullableUtc" },
+        "evidenceRefs": {
+          "type": "array",
+          "maxItems": 16,
+          "items": { "$ref": "#/$defs/evidenceRef" }
+        },
+        "causalEventIds": {
+          "type": "array",
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^causal-event-[a-f0-9]{64}$"
+          }
+        },
+        "derivation": { "$ref": "#/$defs/summaryDerivation" }
+      }
+    },
+    "freshness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "basis",
+        "basisAtUtc",
+        "evaluatedAtUtc",
+        "ageSeconds",
+        "staleAfterSeconds"
+      ],
+      "properties": {
+        "status": { "enum": ["fresh", "stale", "unknown", "unavailable"] },
+        "basis": {
+          "enum": ["occurred", "observed", "published", "heartbeat", "semantic", "none"]
+        },
+        "basisAtUtc": { "$ref": "#/$defs/nullableUtc" },
+        "evaluatedAtUtc": { "$ref": "#/$defs/utc" },
+        "ageSeconds": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "integer", "minimum": 0 }
+          ]
+        },
+        "staleAfterSeconds": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "integer", "minimum": 1, "maximum": 86400 }
+          ]
+        }
+      }
+    },
+    "authorityFact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "factId",
+        "state",
+        "reasonCode",
+        "expectedAuthority",
+        "selectedAuthority",
+        "provenance",
+        "freshness",
+        "conflictingAuthorities"
+      ],
+      "properties": {
+        "factId": { "$ref": "#/$defs/identifier" },
+        "state": {
+          "enum": [
+            "current", "stale", "unknown", "unavailable", "unsupported",
+            "contradictory", "authority-mismatch", "ambiguous"
+          ]
+        },
+        "reasonCode": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/reasonCode" }
+          ]
+        },
+        "expectedAuthority": { "$ref": "authority-reference.schema.json" },
+        "selectedAuthority": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "authority-reference.schema.json" }
+          ]
+        },
+        "provenance": { "$ref": "#/$defs/provenance" },
+        "freshness": { "$ref": "#/$defs/freshness" },
+        "conflictingAuthorities": {
+          "type": "array",
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": { "$ref": "authority-reference.schema.json" }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "state": { "const": "current" } },
+            "required": ["state"]
+          },
+          "then": {
+            "properties": {
+              "reasonCode": { "type": "null" },
+              "selectedAuthority": { "$ref": "authority-reference.schema.json" },
+              "freshness": {
+                "type": "object",
+                "properties": { "status": { "const": "fresh" } }
+              }
+            }
+          },
+          "else": {
+            "properties": { "reasonCode": { "$ref": "#/$defs/reasonCode" } }
+          }
+        },
+        {
+          "if": {
+            "properties": { "state": { "const": "stale" } },
+            "required": ["state"]
+          },
+          "then": {
+            "properties": {
+              "selectedAuthority": { "$ref": "authority-reference.schema.json" },
+              "freshness": {
+                "type": "object",
+                "properties": { "status": { "const": "stale" } }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "enum": [
+                  "unknown", "unavailable", "unsupported", "contradictory",
+                  "authority-mismatch", "ambiguous"
+                ]
+              }
+            },
+            "required": ["state"]
+          },
+          "then": { "properties": { "selectedAuthority": { "type": "null" } } }
+        },
+        {
+          "if": {
+            "properties": { "state": { "enum": ["unavailable", "unsupported"] } },
+            "required": ["state"]
+          },
+          "then": {
+            "properties": {
+              "freshness": {
+                "type": "object",
+                "properties": { "status": { "const": "unavailable" } }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "enum": ["unknown", "contradictory", "authority-mismatch", "ambiguous"]
+              }
+            },
+            "required": ["state"]
+          },
+          "then": {
+            "properties": {
+              "freshness": {
+                "type": "object",
+                "properties": { "status": { "const": "unknown" } }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "state": { "enum": ["contradictory", "ambiguous"] } },
+            "required": ["state"]
+          },
+          "then": {
+            "properties": {
+              "conflictingAuthorities": { "type": "array", "minItems": 2 }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "state": { "const": "authority-mismatch" } },
+            "required": ["state"]
+          },
+          "then": {
+            "properties": {
+              "conflictingAuthorities": { "type": "array", "minItems": 1 }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "enum": ["current", "stale", "unknown", "unavailable", "unsupported"]
+              }
+            },
+            "required": ["state"]
+          },
+          "then": {
+            "properties": {
+              "conflictingAuthorities": { "type": "array", "maxItems": 0 }
+            }
+          }
+        }
+      ]
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maxFactsPerLayer",
+        "maxTotalFacts",
+        "maxExternalRefsPerFact",
+        "maxEvidenceRefsPerFact",
+        "maxFactValueBytes",
+        "maxSnapshotBytes"
+      ],
+      "properties": {
+        "maxFactsPerLayer": { "const": 128 },
+        "maxTotalFacts": { "const": 512 },
+        "maxExternalRefsPerFact": { "const": 16 },
+        "maxEvidenceRefsPerFact": { "const": 16 },
+        "maxFactValueBytes": { "const": 16384 },
+        "maxSnapshotBytes": { "const": 1048576 }
+      }
+    },
+    "workFacts": {
+      "type": "array",
+      "maxItems": 128,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/workFact" }
+    },
+    "executionFacts": {
+      "type": "array",
+      "maxItems": 128,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/executionFact" }
+    },
+    "artifactFacts": {
+      "type": "array",
+      "maxItems": 128,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/artifactFact" }
+    },
+    "attentionFacts": {
+      "type": "array",
+      "maxItems": 128,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/attentionFact" }
+    },
+    "surfaceFacts": {
+      "type": "array",
+      "maxItems": 128,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/surfaceFact" }
+    },
+    "authorityFacts": {
+      "type": "array",
+      "maxItems": 512,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/authorityFact" }
+    },
+    "layers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["work", "execution", "artifact", "attention", "surface", "authority"],
+      "properties": {
+        "work": { "$ref": "#/$defs/workFacts" },
+        "execution": { "$ref": "#/$defs/executionFacts" },
+        "artifact": { "$ref": "#/$defs/artifactFacts" },
+        "attention": { "$ref": "#/$defs/attentionFacts" },
+        "surface": { "$ref": "#/$defs/surfaceFacts" },
+        "authority": { "$ref": "#/$defs/authorityFacts" }
+      }
+    }
+  }
+}

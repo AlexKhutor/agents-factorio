@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/child-intervention.v1.json",
+  "title": "Managed child task intervention v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "eventId",
+    "sourceId",
+    "taskId",
+    "threadId",
+    "turnId",
+    "state",
+    "initiator",
+    "actor",
+    "attribution",
+    "source",
+    "reason",
+    "providerEvent",
+    "observedAtUtc",
+    "availableActions",
+    "resolution"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "eventId": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "sourceId": { "$ref": "#/$defs/id" },
+    "taskId": { "$ref": "#/$defs/id" },
+    "threadId": { "type": ["string", "null"], "maxLength": 256 },
+    "turnId": { "type": ["string", "null"], "maxLength": 256 },
+    "state": { "enum": ["awaiting_operator", "resolved"] },
+    "initiator": { "enum": ["operator-ui", "orchestrator", "provider", "unknown"] },
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "id"],
+      "properties": {
+        "type": { "enum": ["human", "service", "unknown"] },
+        "id": { "type": "string", "minLength": 1, "maxLength": 96 }
+      }
+    },
+    "attribution": { "enum": ["confirmed", "correlated", "unknown"] },
+    "source": { "const": "openai-codex-vscode-ui" },
+    "reason": { "type": ["string", "null"], "maxLength": 512 },
+    "providerEvent": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "reason", "atUtc"],
+          "properties": {
+            "type": { "type": ["string", "null"], "maxLength": 64 },
+            "reason": { "type": ["string", "null"], "maxLength": 256 },
+            "atUtc": { "type": ["string", "null"], "format": "date-time" }
+          }
+        }
+      ]
+    },
+    "observedAtUtc": { "type": "string", "format": "date-time" },
+    "availableActions": {
+      "type": "array",
+      "maxItems": 2,
+      "uniqueItems": true,
+      "items": { "enum": ["resume", "cancel"] }
+    },
+    "resolution": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["action", "requestedBy", "reason", "atUtc"],
+          "properties": {
+            "action": { "enum": ["resume", "cancel"] },
+            "requestedBy": { "type": "string", "minLength": 1, "maxLength": 96 },
+            "reason": { "type": ["string", "null"], "maxLength": 512 },
+            "atUtc": { "type": "string", "format": "date-time" }
+          }
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9.-]{1,95}$"
+    }
+  }
+}

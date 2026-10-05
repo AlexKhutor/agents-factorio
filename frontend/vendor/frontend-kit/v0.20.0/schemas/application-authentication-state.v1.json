@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/application-authentication-state.v1.json",
+  "title": "Application Authentication State v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "contractVersion", "provider", "status", "reasonCode",
+    "requiresUserAction", "observedAtUtc", "validUntilUtc", "capabilities"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "provider": {
+      "type": "object", "additionalProperties": false,
+      "required": ["providerId", "providerVersion", "runtimeInstanceId"],
+      "properties": {
+        "providerId": { "$ref": "#/$defs/id" },
+        "providerVersion": { "$ref": "#/$defs/version" },
+        "runtimeInstanceId": { "$ref": "#/$defs/id" }
+      }
+    },
+    "status": {
+      "enum": ["authenticated", "unauthenticated", "expired", "unavailable", "unknown"]
+    },
+    "reasonCode": {
+      "enum": [
+        "authenticated", "sign-in-required", "session-expired",
+        "provider-unavailable", "not-observed"
+      ]
+    },
+    "requiresUserAction": { "type": "boolean" },
+    "observedAtUtc": { "$ref": "#/$defs/utc" },
+    "validUntilUtc": { "$ref": "#/$defs/utc" },
+    "capabilities": {
+      "type": "array", "maxItems": 4, "uniqueItems": true,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["capabilityId", "support"],
+        "properties": {
+          "capabilityId": {
+            "enum": ["status-observation", "interactive-login", "session-reuse", "logout"]
+          },
+          "support": { "enum": ["supported", "unsupported", "unknown"] }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "status": { "enum": ["unauthenticated", "expired"] } },
+        "required": ["status"]
+      },
+      "then": { "properties": { "requiresUserAction": { "const": true } } },
+      "else": { "properties": { "requiresUserAction": { "const": false } } }
+    },
+    {
+      "if": { "properties": { "status": { "const": "authenticated" } }, "required": ["status"] },
+      "then": { "properties": { "reasonCode": { "const": "authenticated" } } }
+    },
+    {
+      "if": { "properties": { "status": { "const": "unauthenticated" } }, "required": ["status"] },
+      "then": { "properties": { "reasonCode": { "const": "sign-in-required" } } }
+    },
+    {
+      "if": { "properties": { "status": { "const": "expired" } }, "required": ["status"] },
+      "then": { "properties": { "reasonCode": { "const": "session-expired" } } }
+    },
+    {
+      "if": { "properties": { "status": { "const": "unavailable" } }, "required": ["status"] },
+      "then": { "properties": { "reasonCode": { "const": "provider-unavailable" } } }
+    },
+    {
+      "if": { "properties": { "status": { "const": "unknown" } }, "required": ["status"] },
+      "then": { "properties": { "reasonCode": { "const": "not-observed" } } }
+    }
+  ],
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$" },
+    "version": { "type": "string", "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "utc": { "type": "string", "format": "date-time", "pattern": "Z$", "maxLength": 64 }
+  }
+}

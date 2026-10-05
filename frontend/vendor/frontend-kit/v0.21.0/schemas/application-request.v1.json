@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/application-request.v1.json",
+  "title": "Application Request Envelope v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "contractVersion", "requestId", "correlationId",
+    "operation", "requestedAtUtc", "input"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "requestId": {
+      "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/envelopeId"
+    },
+    "correlationId": {
+      "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/envelopeId"
+    },
+    "causationId": {
+      "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/envelopeId"
+    },
+    "operation": {
+      "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/operationRef"
+    },
+    "requestedAtUtc": {
+      "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/utc"
+    },
+    "deadlineAtUtc": {
+      "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/utc"
+    },
+    "input": {
+      "type": "object",
+      "maxProperties": 256,
+      "propertyNames": { "type": "string", "minLength": 1, "maxLength": 128 },
+      "additionalProperties": {
+        "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/jsonValue"
+      }
+    }
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/backend-command-result.v1.json",
+  "title": "Orchestrator Backend Command Result v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "contractVersion",
+    "requestId",
+    "action",
+    "status",
+    "replayed",
+    "target",
+    "acceptedSequence",
+    "acceptedAtUtc",
+    "completedAtUtc",
+    "outcome",
+    "publication",
+    "diagnostics"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "requestId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"
+    },
+    "action": { "enum": ["stop", "resume", "cancel"] },
+    "status": { "const": "applied" },
+    "replayed": { "type": "boolean" },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceId", "taskId", "interventionEventId"],
+      "properties": {
+        "sourceId": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "taskId": { "type": "string", "minLength": 1, "maxLength": 96 },
+        "interventionEventId": { "type": ["string", "null"], "maxLength": 64 }
+      }
+    },
+    "acceptedSequence": { "type": "integer", "minimum": 0 },
+    "acceptedAtUtc": { "type": "string", "format": "date-time" },
+    "completedAtUtc": { "type": "string", "format": "date-time" },
+    "outcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "retryAuthorized", "providerConfirmation"],
+      "properties": {
+        "state": { "enum": ["stop_requested", "resume_authorized", "cancelled"] },
+        "retryAuthorized": { "type": "boolean" },
+        "providerConfirmation": { "enum": ["pending", "previously_observed"] }
+      }
+    },
+    "publication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "sequence", "errorCode"],
+      "properties": {
+        "status": { "enum": ["refreshed", "failed"] },
+        "sequence": { "type": ["integer", "null"], "minimum": 0 },
+        "errorCode": { "type": ["string", "null"], "maxLength": 96 }
+      }
+    },
+    "diagnostics": {
+      "type": "array",
+      "maxItems": 16,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1, "maxLength": 96 }
+    }
+  }
+}

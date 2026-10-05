@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "sdkPath": "C:/agents-factorio/frontend/node_modules/@anthropic-ai/claude-agent-sdk",
+  "models": [
+    { "id": "claude-opus-5-5", "displayName": "Claude Opus 5.5", "efforts": ["default", "low", "medium", "high", "xhigh", "max"], "defaultEffort": "default" },
+    { "id": "claude-sonnet-5-5", "displayName": "Claude Sonnet 5.5", "efforts": ["default", "low", "medium", "high", "xhigh", "max"], "defaultEffort": "default" },
+    { "id": "claude-fable-5-1", "displayName": "Claude Fable 5.1", "efforts": ["default", "low", "medium", "high", "xhigh", "max"], "defaultEffort": "default" },
+    { "id": "claude-haiku-4-5-20251001", "displayName": "Claude Haiku 4.5", "efforts": ["default"], "defaultEffort": "default" }
+  ],
+  "settingSources": ["project", "local"],
+  "permissionMode": "acceptEdits"
+}

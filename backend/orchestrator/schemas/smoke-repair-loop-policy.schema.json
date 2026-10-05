@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.agents-factorio.dev/schemas/smoke-repair-loop-policy-v1.json",
+  "title": "Confirmed smoke repair loop policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "loopId", "confirmedPlan", "scope", "limits", "routing", "returnContract", "createdAtUtc"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "loopId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9.-]{2,95}$" },
+    "confirmedPlan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["revision", "sha256", "confirmedBy", "confirmedAtUtc"],
+      "properties": {
+        "revision": { "type": "integer", "minimum": 1 },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "confirmedBy": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "confirmedAtUtc": { "type": "string", "format": "date-time" }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["testSourceId", "repairSourceId", "allowedChanges", "forbiddenChanges"],
+      "properties": {
+        "testSourceId": { "$ref": "#/$defs/sourceId" },
+        "repairSourceId": { "$ref": "#/$defs/sourceId" },
+        "allowedChanges": { "$ref": "#/$defs/stringArray" },
+        "forbiddenChanges": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["maxRepairCycles", "maxSameIncidentOccurrences", "freshChatAndTaskIdsRequired"],
+      "properties": {
+        "maxRepairCycles": { "type": "integer", "minimum": 1, "maximum": 3 },
+        "maxSameIncidentOccurrences": { "const": 1 },
+        "freshChatAndTaskIdsRequired": { "const": true }
+      }
+    },
+    "routing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["maintenanceChatMode", "executionProfile"],
+      "properties": {
+        "maintenanceChatMode": { "const": "operator-selected-existing" },
+        "executionProfile": { "$ref": "#/$defs/executionProfile" }
+      }
+    },
+    "returnContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reportOperation", "continuationPolicy"],
+      "properties": {
+        "reportOperation": { "const": "accept" },
+        "continuationPolicy": { "const": "continue-confirmed-plan" }
+      }
+    },
+    "createdAtUtc": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "sourceId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{1,63}$" },
+    "stringArray": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+    "executionProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "model", "reasoningEffort", "fallbackPolicy"],
+      "properties": {
+        "provider": { "const": "openai" },
+        "model": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "reasoningEffort": { "type": "string", "minLength": 1, "maxLength": 32 },
+        "fallbackPolicy": { "const": "deny" }
+      }
+    }
+  }
+}

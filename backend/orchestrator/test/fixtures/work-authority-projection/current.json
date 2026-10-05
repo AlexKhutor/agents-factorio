@@ -1,0 +1,53 @@
+{
+  "input": {
+    "fieldId": "provider.execution.state",
+    "expectedAuthority": {
+      "schemaVersion": 1,
+      "authorityType": "provider",
+      "sourceId": "codex-app-server",
+      "externalId": "thread-current",
+      "contractVersion": "v1.0.0"
+    },
+    "observations": [
+      {
+        "observationId": "provider-state-current-1",
+        "authority": {
+          "schemaVersion": 1,
+          "authorityType": "provider",
+          "sourceId": "codex-app-server",
+          "externalId": "thread-current",
+          "contractVersion": "v1.0.0"
+        },
+        "value": {
+          "state": "running"
+        },
+        "occurredAtUtc": "2026-08-30T09:59:20.000Z",
+        "observedAtUtc": "2026-08-30T09:59:40.000Z",
+        "publishedAtUtc": "2026-08-30T09:59:45.000Z",
+        "heartbeatAtUtc": "2026-08-30T09:59:50.000Z",
+        "evidenceRefs": [
+          {
+            "schemaVersion": 1,
+            "kind": "provider-turn",
+            "relationship": "supports",
+            "authority": {
+              "schemaVersion": 1,
+              "authorityType": "provider",
+              "sourceId": "codex-app-server",
+              "externalId": "thread-current",
+              "contractVersion": "v1.0.0"
+            },
+            "locator": "provider://threads/thread-current/turns/turn-9",
+            "label": "Provider turn receipt"
+          }
+        ]
+      }
+    ],
+    "availability": "available",
+    "reconciledAtUtc": "2026-08-30T10:00:00.000Z",
+    "staleAfterSeconds": 60,
+    "freshnessTimestampField": "observedAtUtc",
+    "futureSkewSeconds": 5
+  },
+  "expectedStatus": "current"
+}

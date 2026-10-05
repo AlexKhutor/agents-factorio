@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/application-gateway-descriptor.v2.json",
+  "title": "Application Gateway Descriptor v0.2.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "contractVersion", "descriptorId", "transportId",
+    "publishedAtUtc", "validUntilUtc", "instance", "workspace", "endpoint",
+    "authorization", "routes", "capabilityDiscovery", "exposedOperations"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.2.0" },
+    "descriptorId": {
+      "type": "string",
+      "pattern": "^application-gateway:[a-f0-9]{64}$"
+    },
+    "transportId": { "const": "loopback-http-json-ndjson-v1" },
+    "publishedAtUtc": { "$ref": "#/$defs/utc" },
+    "validUntilUtc": { "$ref": "#/$defs/utc" },
+    "instance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "instanceId", "generation", "lifecycleIdentitySha256", "processId",
+        "processStartedAtUtc", "readyAtUtc", "adapterVersion"
+      ],
+      "properties": {
+        "instanceId": { "$ref": "#/$defs/uuid" },
+        "generation": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+        "lifecycleIdentitySha256": { "$ref": "#/$defs/sha256" },
+        "processId": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+        "processStartedAtUtc": { "$ref": "#/$defs/utc" },
+        "readyAtUtc": { "$ref": "#/$defs/utc" },
+        "adapterVersion": { "const": "v0.1.0" }
+      }
+    },
+    "workspace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["projectId", "sourceId", "workspaceRootSha256"],
+      "properties": {
+        "projectId": { "$ref": "#/$defs/id" },
+        "sourceId": { "$ref": "#/$defs/id" },
+        "workspaceRootSha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "endpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion", "contractVersion", "transportId", "instanceId",
+        "lifecycleIdentitySha256", "sessionId", "workspaceRootSha256", "scheme",
+        "host", "port", "authority", "endpointId"
+      ],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "contractVersion": { "const": "v0.1.0" },
+        "transportId": { "const": "loopback-http-json-ndjson-v1" },
+        "instanceId": { "$ref": "#/$defs/uuid" },
+        "lifecycleIdentitySha256": { "$ref": "#/$defs/sha256" },
+        "sessionId": { "$ref": "#/$defs/uuid" },
+        "workspaceRootSha256": { "$ref": "#/$defs/sha256" },
+        "scheme": { "const": "http" },
+        "host": { "const": "127.0.0.1" },
+        "port": { "type": "integer", "minimum": 1024, "maximum": 65535 },
+        "authority": { "type": "string", "pattern": "^127\\.0\\.0\\.1:[0-9]{4,5}$" },
+        "endpointId": { "type": "string", "pattern": "^gateway-endpoint-[a-f0-9]{64}$" }
+      }
+    },
+    "authorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scheme", "sessionId", "bearerToken", "expiresAtUtc"],
+      "properties": {
+        "scheme": { "const": "Bearer" },
+        "sessionId": { "$ref": "#/$defs/uuid" },
+        "bearerToken": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43,256}$" },
+        "expiresAtUtc": { "$ref": "#/$defs/utc" }
+      }
+    },
+    "routes": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "prefixItems": [
+        { "$ref": "#/$defs/operationRoute" },
+        { "$ref": "#/$defs/eventRoute" }
+      ],
+      "items": false
+    },
+    "capabilityDiscovery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operationId", "contractVersion"],
+      "properties": {
+        "operationId": { "const": "discovery.application.capabilities" },
+        "contractVersion": { "const": "v0.2.0" }
+      }
+    },
+    "exposedOperations": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 128,
+      "uniqueItems": true,
+      "contains": {
+        "type": "object",
+        "required": ["operationId"],
+        "properties": {
+          "operationId": { "const": "discovery.application.capabilities" }
+        }
+      },
+      "items": { "$ref": "#/$defs/operationRef" }
+    }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "uuid": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "utc": { "type": "string", "format": "date-time", "pattern": "Z$", "maxLength": 64 },
+    "operationRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "contractVersion", "family", "operationId"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "contractVersion": { "const": "v0.1.0" },
+        "family": {
+          "enum": [
+            "discovery", "query", "subscription", "proposal", "approval",
+            "mutation", "receipt-lookup"
+          ]
+        },
+        "operationId": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 128,
+          "pattern": "^[a-z][a-z0-9]*(?:\\.[a-z][a-z0-9-]*){2,5}$"
+        }
+      },
+      "allOf": [
+        { "if": { "properties": { "family": { "const": "discovery" } }, "required": ["family"] }, "then": { "properties": { "operationId": { "type": "string", "pattern": "^discovery\\." } } } },
+        { "if": { "properties": { "family": { "const": "query" } }, "required": ["family"] }, "then": { "properties": { "operationId": { "type": "string", "pattern": "^query\\." } } } },
+        { "if": { "properties": { "family": { "const": "subscription" } }, "required": ["family"] }, "then": { "properties": { "operationId": { "type": "string", "pattern": "^subscription\\." } } } },
+        { "if": { "properties": { "family": { "const": "proposal" } }, "required": ["family"] }, "then": { "properties": { "operationId": { "type": "string", "pattern": "^proposal\\." } } } },
+        { "if": { "properties": { "family": { "const": "approval" } }, "required": ["family"] }, "then": { "properties": { "operationId": { "type": "string", "pattern": "^approval\\." } } } },
+        { "if": { "properties": { "family": { "const": "mutation" } }, "required": ["family"] }, "then": { "properties": { "operationId": { "type": "string", "pattern": "^mutation\\." } } } },
+        { "if": { "properties": { "family": { "const": "receipt-lookup" } }, "required": ["family"] }, "then": { "properties": { "operationId": { "type": "string", "pattern": "^receipt\\." } } } }
+      ]
+    },
+    "operationRoute": {
+      "type": "object", "additionalProperties": false,
+      "required": ["routeId", "method", "path", "requestContractVersion", "responseMediaType"],
+      "properties": {
+        "routeId": { "const": "application-operations" },
+        "method": { "const": "POST" },
+        "path": { "const": "/v1/operations" },
+        "requestContractVersion": { "const": "v0.1.0" },
+        "responseMediaType": { "const": "application/json" }
+      }
+    },
+    "eventRoute": {
+      "type": "object", "additionalProperties": false,
+      "required": ["routeId", "method", "path", "requestContractVersion", "responseMediaType"],
+      "properties": {
+        "routeId": { "const": "application-event-read" },
+        "method": { "const": "POST" },
+        "path": { "const": "/v1/events/read" },
+        "requestContractVersion": { "const": "v0.1.0" },
+        "responseMediaType": { "const": "application/x-ndjson" }
+      }
+    }
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "input": {
+    "fieldId": "semantic.work.title",
+    "expectedAuthority": {
+      "schemaVersion": 1,
+      "authorityType": "external-semantic-source",
+      "sourceId": "work-registry",
+      "externalId": "workstream-m1",
+      "contractVersion": "v0.1.0"
+    },
+    "observations": [
+      {
+        "observationId": "semantic-title-without-heartbeat",
+        "authority": {
+          "schemaVersion": 1,
+          "authorityType": "external-semantic-source",
+          "sourceId": "work-registry",
+          "externalId": "workstream-m1",
+          "contractVersion": "v0.1.0"
+        },
+        "value": {
+          "title": "Expose ownership in projections"
+        },
+        "occurredAtUtc": "2026-08-30T09:58:00.000Z",
+        "observedAtUtc": "2026-08-30T09:59:30.000Z",
+        "evidenceRefs": [
+          {
+            "schemaVersion": 1,
+            "kind": "semantic-workstream",
+            "relationship": "supports",
+            "authority": {
+              "schemaVersion": 1,
+              "authorityType": "external-semantic-source",
+              "sourceId": "work-registry",
+              "externalId": "workstream-m1",
+              "contractVersion": "v0.1.0"
+            },
+            "locator": "work-registry://workstreams/m1",
+            "label": "Semantic workstream"
+          }
+        ]
+      }
+    ],
+    "availability": "available",
+    "reconciledAtUtc": "2026-08-30T10:00:00.000Z",
+    "staleAfterSeconds": 60,
+    "freshnessTimestampField": "heartbeatAtUtc",
+    "futureSkewSeconds": 5
+  },
+  "expectedStatus": "unknown"
+}

@@ -1,0 +1,21 @@
+{
+  "_comment": [
+    "Copy to config/local.json and fill in values for THIS machine.",
+    "config/local.json is git-ignored on purpose: it names a local controller",
+    "installation. Never copy another machine's paths or identities here.",
+    "controllerRoot: absolute path of the installed controller root - the folder",
+    "that contains .project-local/application-gateway/ and .orchestrator/runtime/.",
+    "expectedWorkspace: the identity the descriptor must carry. Read it from that",
+    "controller's .project-local/application-gateway/status.v1.json (identity.workspace).",
+    "A mismatch means the client refuses to connect, which is the point."
+  ],
+  "controllerRoot": "<absolute path to the installed controller root>",
+  "expectedWorkspace": {
+    "projectId": "<projectId of that controller>",
+    "workspaceRootSha256": "<64 lowercase hex characters>"
+  },
+  "gatewayCli": {
+    "nodeExecutable": "node",
+    "scriptRelativePath": ".orchestrator/runtime/application-gateway-cli.mjs"
+  }
+}

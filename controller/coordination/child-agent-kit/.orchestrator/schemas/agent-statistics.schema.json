@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/agent-statistics.v1.json",
+  "title": "Provider-neutral Agent Statistics v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "updatedAtUtc", "timing", "tokens", "cost", "limitations"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "updatedAtUtc": { "type": "string", "format": "date-time" },
+    "timing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["startedAtUtc", "measuredAtUtc", "wallClockSeconds"],
+      "properties": {
+        "startedAtUtc": { "type": ["string", "null"], "format": "date-time" },
+        "measuredAtUtc": { "type": "string", "format": "date-time" },
+        "wallClockSeconds": { "type": ["integer", "null"], "minimum": 0 }
+      }
+    },
+    "tokens": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "source", "scope", "cumulative", "lastTurn", "modelContextWindow"],
+      "properties": {
+        "status": { "enum": ["available", "unavailable"] },
+        "source": { "enum": ["codex-app-server-event", "codex-rollout", "worker-report", "none"] },
+        "scope": { "enum": ["agent-task", "provider-thread"] },
+        "cumulative": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/tokenBreakdown" }] },
+        "lastTurn": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/tokenBreakdown" }] },
+        "modelContextWindow": { "type": ["integer", "null"], "minimum": 0 }
+      }
+    },
+    "cost": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "source", "estimatedCreditsMicros", "estimatedUsdMicros", "currency", "groups"],
+      "properties": {
+        "status": { "enum": ["estimated", "unavailable"] },
+        "source": { "enum": ["codex-app-server-query", "worker-report", "none"] },
+        "estimatedCreditsMicros": { "type": ["string", "null"], "pattern": "^[0-9]+$" },
+        "estimatedUsdMicros": { "type": ["string", "null"], "pattern": "^[0-9]+$" },
+        "currency": { "enum": ["USD", null] },
+        "groups": {
+          "type": "array",
+          "maxItems": 32,
+          "items": { "$ref": "#/$defs/costGroup" }
+        }
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "maxItems": 20,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1, "maxLength": 160 }
+    }
+  },
+  "$defs": {
+    "tokenBreakdown": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["inputTokens", "cachedInputTokens", "cacheWriteInputTokens", "outputTokens", "reasoningOutputTokens", "totalTokens"],
+      "properties": {
+        "inputTokens": { "type": "integer", "minimum": 0 },
+        "cachedInputTokens": { "type": "integer", "minimum": 0 },
+        "cacheWriteInputTokens": { "type": "integer", "minimum": 0 },
+        "outputTokens": { "type": "integer", "minimum": 0 },
+        "reasoningOutputTokens": { "type": "integer", "minimum": 0 },
+        "totalTokens": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "costGroup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model", "reasoningEffort", "speed", "estimatedCreditsMicros", "netNewInputTokens", "cachedInputTokens", "inputTokens", "outputTokens", "totalTokens"],
+      "properties": {
+        "model": { "type": ["string", "null"], "maxLength": 96 },
+        "reasoningEffort": { "type": ["string", "null"], "maxLength": 32 },
+        "speed": { "type": ["string", "null"], "maxLength": 32 },
+        "estimatedCreditsMicros": { "type": ["string", "null"], "pattern": "^[0-9]+$" },
+        "netNewInputTokens": { "type": ["string", "null"], "pattern": "^[0-9]+$" },
+        "cachedInputTokens": { "type": ["string", "null"], "pattern": "^[0-9]+$" },
+        "inputTokens": { "type": ["string", "null"], "pattern": "^[0-9]+$" },
+        "outputTokens": { "type": ["string", "null"], "pattern": "^[0-9]+$" },
+        "totalTokens": { "type": ["string", "null"], "pattern": "^[0-9]+$" }
+      }
+    }
+  }
+}

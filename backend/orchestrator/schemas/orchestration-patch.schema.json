@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/orchestration-patch.v1.json",
+  "title": "Versioned Orchestration Patch Manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "patchId", "version", "roles", "files"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "patchId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,95}$" },
+    "version": { "type": "string", "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "minimumTaskContract": { "type": "string", "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "activatesReportContract": { "type": ["string", "null"], "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "roles": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "enum": ["controller", "worker"] }
+    },
+    "files": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["role", "source", "destination", "sha256"],
+        "properties": {
+          "role": { "enum": ["controller", "worker", "shared"] },
+          "source": { "type": "string", "minLength": 1, "maxLength": 1024 },
+          "destination": { "type": "string", "minLength": 1, "maxLength": 1024 },
+          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        }
+      }
+    }
+  }
+}

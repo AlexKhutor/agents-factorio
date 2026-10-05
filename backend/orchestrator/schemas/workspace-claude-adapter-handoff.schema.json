@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/workspace-claude-adapter-handoff.schema.json",
+  "title": "Orchestrator-side Claude workspace adapter handoff",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "contractVersion", "routeId", "provider", "sourceId",
+    "workspaceId", "foreignOwner", "ownerProject", "authorityState", "generatedAtUtc",
+    "executionProfile", "portablePaths", "ownerBaseline", "operations", "invariants",
+    "conformanceCases", "readiness", "handoffSha256"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "routeId": { "const": "claude-code" },
+    "provider": { "const": "anthropic" },
+    "sourceId": { "$ref": "#/$defs/identifier" },
+    "workspaceId": { "$ref": "#/$defs/identifier" },
+    "foreignOwner": { "const": "claude-development" },
+    "ownerProject": { "const": "IsolateClaudeCode" },
+    "authorityState": { "const": "foreign-implementation-required" },
+    "generatedAtUtc": { "type": "string", "format": "date-time" },
+    "executionProfile": { "$ref": "#/$defs/profile" },
+    "portablePaths": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["endpoint", "taskInbox", "reportOutbox"],
+      "properties": {
+        "endpoint": { "const": ".orchestrator/workspace-endpoint.json" },
+        "taskInbox": { "const": ".orchestrator/tasks/inbox" },
+        "reportOutbox": { "const": ".orchestrator/reports/outbox" }
+      }
+    },
+    "ownerBaseline": { "$ref": "#/$defs/ownerBaseline" },
+    "operations": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 9,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["operation", "currentSupport", "requiredGate"],
+        "properties": {
+          "operation": { "$ref": "#/$defs/operation" },
+          "currentSupport": { "const": "foreign-owner-required" },
+          "requiredGate": { "const": "isolate-claude-code-handoff" }
+        }
+      }
+    },
+    "invariants": {
+      "type": "array", "minItems": 1, "maxItems": 32,
+      "items": { "$ref": "#/$defs/identifier" }
+    },
+    "conformanceCases": {
+      "type": "array", "minItems": 11, "maxItems": 11,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "expected"],
+        "properties": {
+          "id": { "$ref": "#/$defs/identifier" },
+          "expected": { "$ref": "#/$defs/identifier" }
+        }
+      }
+    },
+    "readiness": {
+      "type": "object", "additionalProperties": false,
+      "required": ["conformance", "live", "runtimeReady", "taskCapable"],
+      "properties": {
+        "conformance": { "const": "not-submitted" },
+        "live": { "const": "not-authorized" },
+        "runtimeReady": { "const": false },
+        "taskCapable": { "const": false }
+      }
+    },
+    "handoffSha256": { "$ref": "#/$defs/sha256" }
+  },
+  "$defs": {
+    "identifier": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "operation": {
+      "enum": [
+        "open", "close", "listSessions", "bindSession", "listProfiles",
+        "submitTask", "observeStart", "stopExecution", "returnReport"
+      ]
+    },
+    "ownerRef": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z0-9._/-]+$"
+    },
+    "ownerBaseline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "baselineId", "projectName", "sourceId", "projectVersion",
+        "inspectedAtUtc", "inspectionMode", "sharedSurfaces", "operations", "limitations"
+      ],
+      "properties": {
+        "baselineId": { "const": "isolate-claude-code-v0.2.0-20260913" },
+        "projectName": { "const": "IsolateClaudeCode" },
+        "sourceId": { "const": "claude-development" },
+        "projectVersion": { "const": "v0.2.0" },
+        "inspectedAtUtc": { "type": "string", "format": "date-time" },
+        "inspectionMode": { "const": "read-only-source-and-existing-reports" },
+        "sharedSurfaces": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["surface", "disposition", "ownerRefs"],
+            "properties": {
+              "surface": { "enum": ["workspace-scaffold", "task-plan-progress-report-wake"] },
+              "disposition": { "const": "reuse" },
+              "ownerRefs": {
+                "type": "array", "minItems": 1, "maxItems": 8,
+                "items": { "$ref": "#/$defs/ownerRef" }
+              }
+            }
+          }
+        },
+        "operations": {
+          "type": "array",
+          "minItems": 9,
+          "maxItems": 9,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["operation", "disposition", "ownerRefs", "remainingGaps"],
+            "properties": {
+              "operation": { "$ref": "#/$defs/operation" },
+              "disposition": {
+                "enum": [
+                  "reuse", "reuse-after-conformance", "extend-existing-session-ids",
+                  "extend-existing-file-contract", "extend-existing-session-stop", "implement"
+                ]
+              },
+              "ownerRefs": {
+                "type": "array", "maxItems": 8,
+                "items": { "$ref": "#/$defs/ownerRef" }
+              },
+              "remainingGaps": {
+                "type": "array", "minItems": 1, "maxItems": 8,
+                "items": { "$ref": "#/$defs/identifier" }
+              }
+            }
+          }
+        },
+        "limitations": {
+          "type": "array", "minItems": 1, "maxItems": 16,
+          "items": { "$ref": "#/$defs/identifier" }
+        }
+      }
+    },
+    "profile": {
+      "type": "object", "additionalProperties": false,
+      "required": ["provider", "model", "reasoningEffort", "fallbackPolicy"],
+      "properties": {
+        "provider": { "const": "anthropic" },
+        "model": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "reasoningEffort": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "fallbackPolicy": { "const": "deny" }
+      }
+    }
+  }
+}

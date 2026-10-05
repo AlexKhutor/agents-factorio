@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "documents": [
+    {
+      "id": "control.knowledge.readme",
+      "path": "README.md",
+      "type": "guide",
+      "status": "active"
+    }
+  ]
+}

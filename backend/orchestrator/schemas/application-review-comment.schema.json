@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/application-review-comment.v0.1.0.json",
+  "title": "Application Review Comment v0.1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "contractVersion", "commentId", "commentRevision",
+    "previousCommentSha256", "targetId", "targetSha256", "anchorId",
+    "anchorSha256", "author", "comment", "parentCommentRef", "state",
+    "resolution", "createdAtUtc", "updatedAtUtc", "commentSha256"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "commentId": { "$ref": "#/$defs/id" },
+    "commentRevision": {
+      "type": "integer", "minimum": 1, "maximum": 9007199254740991
+    },
+    "previousCommentSha256": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/sha256" }]
+    },
+    "targetId": { "$ref": "#/$defs/id" },
+    "targetSha256": { "$ref": "#/$defs/sha256" },
+    "anchorId": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/id" }]
+    },
+    "anchorSha256": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/sha256" }]
+    },
+    "author": { "$ref": "#/$defs/localOperator" },
+    "comment": {
+      "type": "string", "minLength": 1, "maxLength": 4096, "pattern": "\\S"
+    },
+    "parentCommentRef": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/commentRef" }]
+    },
+    "state": { "enum": ["open", "resolved"] },
+    "resolution": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/resolution" }]
+    },
+    "createdAtUtc": { "type": "string", "format": "date-time" },
+    "updatedAtUtc": { "type": "string", "format": "date-time" },
+    "commentSha256": { "$ref": "#/$defs/sha256" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "commentRevision": { "const": 1 } } },
+      "then": { "properties": { "previousCommentSha256": { "type": "null" } } },
+      "else": {
+        "properties": {
+          "commentRevision": { "type": "integer", "minimum": 2 },
+          "previousCommentSha256": { "$ref": "#/$defs/sha256" }
+        }
+      }
+    },
+    {
+      "oneOf": [
+        {
+          "properties": {
+            "anchorId": { "type": "null" },
+            "anchorSha256": { "type": "null" }
+          }
+        },
+        {
+          "properties": {
+            "anchorId": { "$ref": "#/$defs/id" },
+            "anchorSha256": { "$ref": "#/$defs/sha256" }
+          }
+        }
+      ]
+    },
+    {
+      "if": { "properties": { "state": { "const": "open" } } },
+      "then": { "properties": { "resolution": { "type": "null" } } },
+      "else": { "properties": { "resolution": { "$ref": "#/$defs/resolution" } } }
+    }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$"
+    },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "localOperator": {
+      "allOf": [
+        { "$ref": "https://isolate-vscode.local/schemas/application-actor-ref.v1.json" },
+        {
+          "type": "object",
+          "properties": { "actorType": { "const": "local-operator" } }
+        }
+      ]
+    },
+    "commentRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commentId", "commentSha256"],
+      "properties": {
+        "commentId": { "$ref": "#/$defs/id" },
+        "commentSha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "resolution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["resolvedBy", "reason", "resolvedAtUtc"],
+      "properties": {
+        "resolvedBy": { "$ref": "#/$defs/localOperator" },
+        "reason": { "enum": ["addressed", "superseded", "withdrawn"] },
+        "resolvedAtUtc": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

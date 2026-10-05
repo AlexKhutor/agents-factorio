@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/backend-query-result.v1.json",
+  "title": "Orchestrator Backend Query Result v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "contractVersion", "query", "status", "sequence", "readAtUtc", "freshness", "backend", "diagnostics", "data"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "query": { "enum": ["capabilities", "overview", "snapshot", "tasks", "agents", "agent-statistics", "attention", "interventions", "workflow-checkpoint", "causal-events"] },
+    "status": { "enum": ["ready", "stale"] },
+    "sequence": { "type": ["integer", "null"], "minimum": 0 },
+    "readAtUtc": { "type": "string", "format": "date-time" },
+    "freshness": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "publishedAtUtc", "ageSeconds", "staleAfterSeconds"],
+          "properties": {
+            "status": { "enum": ["fresh", "stale"] },
+            "publishedAtUtc": { "type": "string", "format": "date-time" },
+            "ageSeconds": { "type": ["integer", "null"], "minimum": 0 },
+            "staleAfterSeconds": { "type": "integer", "minimum": 1 }
+          }
+        }
+      ]
+    },
+    "backend": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "health"],
+          "properties": {
+            "mode": { "enum": ["running", "paused", "draining", "emergency_stopped"] },
+            "health": { "enum": ["ready", "busy", "degraded", "stopped"] }
+          }
+        }
+      ]
+    },
+    "diagnostics": {
+      "type": "array",
+      "maxItems": 16,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1, "maxLength": 96 }
+    },
+    "data": {}
+  }
+}

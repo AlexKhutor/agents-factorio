@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/application-frontend-migration-receipt.v1.json",
+  "title": "Application Frontend Migration Receipt v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "receiptVersion", "migrationId", "outcome", "startedAtUtc",
+    "recordedAtUtc", "policySha256", "source", "target", "rollback", "problems", "receiptId"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "receiptVersion": { "const": "v0.1.0" },
+    "migrationId": { "$ref": "#/$defs/id" },
+    "outcome": { "enum": ["committed", "rolled-back", "failed", "uncertain"] },
+    "startedAtUtc": { "$ref": "#/$defs/utc" },
+    "recordedAtUtc": { "$ref": "#/$defs/utc" },
+    "policySha256": { "$ref": "#/$defs/sha256" },
+    "source": { "$ref": "#/$defs/evidence" },
+    "target": { "$ref": "#/$defs/evidence" },
+    "rollback": { "$ref": "#/$defs/rollback" },
+    "problems": {
+      "type": "array", "maxItems": 16, "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,63}$" }
+    },
+    "receiptId": {
+      "type": "string", "pattern": "^application-frontend-migration-[a-f0-9]{64}$"
+    }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]{1,95}$" },
+    "version": { "type": "string", "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "utc": { "type": "string", "format": "date-time", "pattern": "Z$", "maxLength": 64 },
+    "evidence": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "sdkVersion", "applicationContractVersion", "capabilityContractVersion",
+        "gatewayDescriptorVersion", "eventContractVersion", "kitManifestSha256", "supportStatus"
+      ],
+      "properties": {
+        "sdkVersion": { "$ref": "#/$defs/version" },
+        "applicationContractVersion": { "$ref": "#/$defs/version" },
+        "capabilityContractVersion": { "$ref": "#/$defs/version" },
+        "gatewayDescriptorVersion": { "$ref": "#/$defs/version" },
+        "eventContractVersion": { "$ref": "#/$defs/version" },
+        "kitManifestSha256": { "$ref": "#/$defs/sha256" },
+        "supportStatus": { "enum": ["current", "supported", "deprecated", "unsupported"] }
+      }
+    },
+    "rollback": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "sdkVersion", "kitManifestSha256"],
+      "properties": {
+        "status": { "enum": ["available", "applied", "not-required", "unavailable"] },
+        "sdkVersion": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/version" }] },
+        "kitManifestSha256": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/sha256" }] }
+      },
+      "allOf": [{
+        "if": {
+          "properties": { "status": { "enum": ["available", "applied"] } },
+          "required": ["status"]
+        },
+        "then": {
+          "properties": {
+            "sdkVersion": { "$ref": "#/$defs/version" },
+            "kitManifestSha256": { "$ref": "#/$defs/sha256" }
+          }
+        },
+        "else": {
+          "properties": {
+            "sdkVersion": { "type": "null" },
+            "kitManifestSha256": { "type": "null" }
+          }
+        }
+      }]
+    }
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/application-review-target.v0.1.0.json",
+  "title": "Application Review Target v0.1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "contractVersion", "targetId", "targetKind", "resource",
+    "selector", "targetSha256"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "targetId": { "$ref": "#/$defs/id" },
+    "targetKind": {
+      "enum": ["artifact", "file", "structured-element", "text-range"]
+    },
+    "resource": {
+      "allOf": [
+        { "$ref": "https://isolate-vscode.local/schemas/application-resource-ref.v1.json" },
+        {
+          "type": "object",
+          "required": ["contentSha256"],
+          "properties": { "contentSha256": { "$ref": "#/$defs/sha256" } }
+        }
+      ]
+    },
+    "selector": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "properties": { "kind": { "const": "whole-resource" } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "elementKind", "elementId"],
+          "properties": {
+            "kind": { "const": "structured-element" },
+            "elementKind": { "$ref": "#/$defs/id" },
+            "elementId": { "$ref": "#/$defs/id" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "startByte", "endByte"],
+          "properties": {
+            "kind": { "const": "text-range" },
+            "startByte": { "type": "integer", "minimum": 0 },
+            "endByte": { "type": "integer", "minimum": 1 }
+          }
+        }
+      ]
+    },
+    "targetSha256": { "$ref": "#/$defs/sha256" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

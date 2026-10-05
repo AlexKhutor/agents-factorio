@@ -1,0 +1,276 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/work-execution-separation.v0.1.0.json",
+  "title": "Work And Execution Separation Contract v0.1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "contractVersion",
+    "workItem",
+    "executions",
+    "executionActors",
+    "conditions"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "workItem": { "$ref": "#/$defs/workItem" },
+    "executions": {
+      "type": "array",
+      "maxItems": 256,
+      "items": { "$ref": "#/$defs/execution" }
+    },
+    "executionActors": {
+      "type": "array",
+      "maxItems": 512,
+      "items": { "$ref": "#/$defs/executionActor" }
+    },
+    "conditions": {
+      "type": "array",
+      "maxItems": 256,
+      "items": { "$ref": "#/$defs/condition" }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "taskRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceId",
+        "taskId",
+        "taskContractVersion",
+        "taskSha256"
+      ],
+      "properties": {
+        "sourceId": { "$ref": "#/$defs/id" },
+        "taskId": { "$ref": "#/$defs/id" },
+        "taskContractVersion": {
+          "type": "string",
+          "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "taskSha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "executionRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceId", "taskId", "executionId"],
+      "properties": {
+        "sourceId": { "$ref": "#/$defs/id" },
+        "taskId": { "$ref": "#/$defs/id" },
+        "executionId": { "$ref": "#/$defs/id" }
+      }
+    },
+    "executionActorRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceId",
+        "taskId",
+        "executionId",
+        "executionActorId"
+      ],
+      "properties": {
+        "sourceId": { "$ref": "#/$defs/id" },
+        "taskId": { "$ref": "#/$defs/id" },
+        "executionId": { "$ref": "#/$defs/id" },
+        "executionActorId": { "$ref": "#/$defs/id" }
+      }
+    },
+    "workItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceId",
+        "workItemId",
+        "workLifecycleState",
+        "taskRefs",
+        "executionRefs"
+      ],
+      "properties": {
+        "sourceId": { "$ref": "#/$defs/id" },
+        "workItemId": { "$ref": "#/$defs/id" },
+        "workLifecycleState": {
+          "enum": [
+            "planned",
+            "ready",
+            "in-progress",
+            "blocked",
+            "awaiting-decision",
+            "reported",
+            "accepted",
+            "rejected",
+            "cancelled"
+          ]
+        },
+        "taskRefs": {
+          "type": "array",
+          "maxItems": 128,
+          "items": { "$ref": "#/$defs/taskRef" }
+        },
+        "executionRefs": {
+          "type": "array",
+          "maxItems": 256,
+          "items": { "$ref": "#/$defs/executionRef" }
+        }
+      }
+    },
+    "parentRelation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "parentExecutionRef", "evidenceRef"],
+      "properties": {
+        "source": {
+          "enum": ["provider-reported", "confirmed-task"]
+        },
+        "parentExecutionRef": {
+          "$ref": "#/$defs/executionRef"
+        },
+        "evidenceRef": {
+          "$ref": "external-reference.schema.json"
+        }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "executionRef",
+        "taskRef",
+        "attemptNumber",
+        "executionLifecycleState",
+        "providerAuthority",
+        "actorRefs"
+      ],
+      "properties": {
+        "executionRef": { "$ref": "#/$defs/executionRef" },
+        "taskRef": { "$ref": "#/$defs/taskRef" },
+        "attemptNumber": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000
+        },
+        "executionLifecycleState": {
+          "enum": [
+            "pending",
+            "starting",
+            "running",
+            "waiting-provider",
+            "completed",
+            "failed",
+            "interrupted",
+            "cancelled",
+            "unknown"
+          ]
+        },
+        "providerAuthority": {
+          "$ref": "authority-reference.schema.json"
+        },
+        "parentRelation": {
+          "$ref": "#/$defs/parentRelation"
+        },
+        "actorRefs": {
+          "type": "array",
+          "maxItems": 128,
+          "items": { "$ref": "#/$defs/executionActorRef" }
+        }
+      }
+    },
+    "executionActor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "executionActorRef",
+        "executionRef",
+        "actorKind"
+      ],
+      "properties": {
+        "executionActorRef": {
+          "$ref": "#/$defs/executionActorRef"
+        },
+        "executionRef": {
+          "$ref": "#/$defs/executionRef"
+        },
+        "actorKind": {
+          "enum": [
+            "primary",
+            "provider-subagent",
+            "runtime",
+            "process"
+          ]
+        },
+        "nativeActorRef": {
+          "$ref": "authority-reference.schema.json"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "actorKind": { "const": "provider-subagent" }
+            },
+            "required": ["actorKind"]
+          },
+          "then": {
+            "required": ["nativeActorRef"]
+          }
+        }
+      ]
+    },
+    "condition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "conditionId",
+        "kind",
+        "targetKind",
+        "targetRef",
+        "conditionState",
+        "authority",
+        "evidenceRefs"
+      ],
+      "properties": {
+        "conditionId": { "$ref": "#/$defs/id" },
+        "kind": {
+          "enum": [
+            "provider-failure",
+            "coordination-blocker",
+            "dependency-wait",
+            "user-decision"
+          ]
+        },
+        "targetKind": {
+          "enum": ["work-item", "task", "execution"]
+        },
+        "targetRef": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "conditionState": {
+          "enum": ["active", "resolved"]
+        },
+        "authority": {
+          "$ref": "authority-reference.schema.json"
+        },
+        "evidenceRefs": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "$ref": "external-reference.schema.json"
+          }
+        }
+      }
+    }
+  }
+}

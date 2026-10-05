@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/provenance-envelope.v0.1.0.json",
+  "title": "Work Orchestrator Provenance Envelope v0.1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "contractVersion",
+    "status",
+    "observedAtUtc"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "status": {
+      "enum": [
+        "current",
+        "stale",
+        "unavailable",
+        "unsupported",
+        "unknown",
+        "contradictory",
+        "authority-mismatch",
+        "ambiguous"
+      ]
+    },
+    "authority": { "$ref": "authority-reference.schema.json" },
+    "value": true,
+    "occurredAtUtc": { "$ref": "#/$defs/utc" },
+    "observedAtUtc": { "$ref": "#/$defs/utc" },
+    "publishedAtUtc": { "$ref": "#/$defs/utc" },
+    "heartbeatAtUtc": { "$ref": "#/$defs/utc" },
+    "freshness": { "$ref": "#/$defs/freshness" },
+    "evidenceRefs": {
+      "type": "array",
+      "maxItems": 32,
+      "items": { "$ref": "external-reference.schema.json" }
+    },
+    "conflict": { "$ref": "#/$defs/conflict" },
+    "lastKnownGood": { "$ref": "#/$defs/lastKnownGood" }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "status": { "enum": ["current", "stale"] } },
+        "required": ["status"]
+      },
+      "then": { "required": ["authority", "value"] },
+      "else": { "not": { "required": ["value"] } }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": ["contradictory", "authority-mismatch", "ambiguous"]
+          }
+        },
+        "required": ["status"]
+      },
+      "then": { "required": ["conflict"] },
+      "else": { "not": { "required": ["conflict"] } }
+    }
+  ],
+  "$defs": {
+    "utc": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$",
+      "maxLength": 64
+    },
+    "freshness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": { "enum": ["fresh", "stale", "unknown"] },
+        "ageSeconds": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "staleAfterSeconds": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        }
+      }
+    },
+    "conflict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reasonCode", "authorities"],
+      "properties": {
+        "reasonCode": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{0,63}$"
+        },
+        "authorities": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 8,
+          "items": { "$ref": "authority-reference.schema.json" }
+        }
+      }
+    },
+    "lastKnownGood": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["observedAtUtc", "authority", "value"],
+      "properties": {
+        "observedAtUtc": { "$ref": "#/$defs/utc" },
+        "authority": { "$ref": "authority-reference.schema.json" },
+        "value": true,
+        "evidenceRefs": {
+          "type": "array",
+          "maxItems": 32,
+          "items": { "$ref": "external-reference.schema.json" }
+        }
+      }
+    }
+  }
+}

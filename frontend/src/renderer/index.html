@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; form-action 'none'; base-uri 'none'"/>
+<title>Agents Factorio Atlas</title>
+<link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand">
+      <span class="brand-mark">A</span>
+      <div>
+        <div class="brand-name">Agents Factorio Atlas</div>
+        <div class="brand-sub muted" id="appVersion">loading</div>
+      </div>
+    </div>
+    <nav id="mapCrumbs" class="crumbs"></nav>
+    <div class="spacer"></div>
+    <div id="modeBadge" class="badge hidden">mode</div>
+    <div class="usage-wrap">
+      <button id="accountChip" class="chip account" type="button">Claude · account…</button>
+      <div id="usageMenu" class="usage-menu hidden"></div>
+    </div>
+    <div id="connectionChip" class="chip status">connecting…</div>
+    <button id="watch" class="small">Live: off</button>
+    <button id="refresh" class="primary small">Refresh</button>
+  </header>
+
+  <div id="deliveryBanner" class="banner bad hidden"></div>
+  <div id="fixtureBanner" class="banner hidden">
+    FIXTURE — local test data, not the controller. Nothing here lets you send anything.
+  </div>
+
+  <main id="mapStage">
+    <canvas id="mapCanvas"></canvas>
+
+    <div id="scopeHud" class="hud">
+      <div class="eyebrow" id="scopeEyebrow">04 / STRATEGIC WORLD</div>
+      <h1 id="scopeName">Project map</h1>
+      <div class="muted" id="scopeMeta"></div>
+      <div class="muted" id="scopeDescription"></div>
+    </div>
+
+    <div id="stateHud" class="hud right">
+      <button id="attentionToggle" class="attention-button">
+        <span id="attentionCount" class="attention-mark">0</span>
+        <span>
+          <strong id="attentionTitle">No attention requests</strong>
+          <small id="attentionSubtitle">Open the list for all projects</small>
+        </span>
+      </button>
+      <div class="hud-row">
+        <button id="trayToggle" class="small">Off the map <span id="trayCount" class="count">0</span></button>
+        <button id="archiveToggle" class="small" title="Archived projects and quarters: return them to the map">Archive <span id="archiveCount" class="count">0</span></button>
+        <button id="readinessToggle" class="small" title="What is available now and why the rest is unavailable">Readiness</button>
+        <button id="logToggle" class="small">Journal</button>
+      </div>
+      <div id="dataNotice" class="notice hidden"></div>
+    </div>
+
+    <div id="editToolbar">
+      <button id="selectTool" class="active" title="Select objects (V)">Select</button>
+      <button id="panTool" title="Pan (H or Space)">Hand</button>
+      <span class="toolbar-divider"></span>
+      <button id="mapUndo" title="Undo">Undo</button>
+      <button id="mapRedo" title="Redo">Redo</button>
+      <span class="toolbar-divider"></span>
+      <button id="mapCompact" title="Shrink the project to its content">Fit</button>
+      <button id="mapExport" title="Save the layout to a file">Export</button>
+      <button id="mapImport" title="Load a layout from a file">Import</button>
+    </div>
+
+    <div id="selectionBar" class="hidden">
+      <span id="selectionCount" class="selection-count"></span>
+      <button id="clearSelection" class="small">Clear selection</button>
+    </div>
+
+    <div id="mapHint" class="hint muted"></div>
+
+    <div id="minimapBox">
+      <div id="minimapLabel">
+        <span id="minimapScope">WORLD</span>
+        <span id="scaleLabel" class="mono"></span>
+      </div>
+      <canvas id="minimapCanvas"></canvas>
+      <div id="worldNavList"></div>
+      <div id="worldNavFoot">
+        <span id="worldNavSummary"></span>
+        <button id="navAttention" class="small">attention</button>
+      </div>
+    </div>
+
+    <div id="toast" class="hidden"></div>
+    <div id="tooltip" class="hidden"></div>
+    <aside id="inspector" class="hidden"></aside>
+    <aside id="attentionPanel" class="hidden">
+      <div class="float-head">
+        <h2>Needs attention</h2>
+        <span class="muted" id="attentionSummary"></span>
+        <div class="spacer"></div>
+        <button id="attentionClose" class="icon-btn flat">×</button>
+      </div>
+      <div class="float-body" id="attentionList"></div>
+      <div class="float-foot muted">
+        Only what is observed: pending questions, problem codes, “failure” and “uncertain” states.
+      </div>
+    </aside>
+
+    <aside id="readinessPanel" class="hidden">
+      <div class="float-head">
+        <h2>Readiness</h2>
+        <span class="muted" id="readinessSummary"></span>
+        <div class="spacer"></div>
+        <button id="readinessClose" class="icon-btn flat">×</button>
+      </div>
+      <div class="float-body" id="readinessBody"></div>
+      <div class="float-foot muted">
+        Only what the Gateway reports. Nothing unavailable here pretends to work.
+      </div>
+    </aside>
+
+    <section id="workspace" class="hidden"></section>
+
+    <div id="contextMenu" class="menu hidden"></div>
+
+    <section id="tray" class="drawer hidden">
+      <div class="float-head">
+        <h2>Off the map</h2>
+        <span class="muted">nodes that cannot be placed</span>
+        <div class="spacer"></div>
+        <button id="trayClose" class="icon-btn flat">×</button>
+      </div>
+      <div class="drawer-body" id="trayList"></div>
+    </section>
+
+    <section id="logDrawer" class="drawer hidden">
+      <div class="float-head">
+        <h2>Journal</h2>
+        <span class="muted" id="activityCount"></span>
+        <div class="spacer"></div>
+        <button id="saveLog" class="small">Save…</button>
+        <button id="exportEvidence" class="small" title="Read journal of this run: which requests went out, to what, with which IDs and how they ended">Evidence…</button>
+        <button id="clearLog" class="small">Clear</button>
+        <button id="logClose" class="icon-btn flat">×</button>
+      </div>
+      <div class="drawer-body mono" id="activityList"></div>
+    </section>
+
+    <div id="sheet" class="sheet hidden">
+      <div class="float-head">
+        <h2 id="sheetTitle">Panel</h2>
+        <span class="muted" id="sheetKind"></span>
+        <div class="spacer"></div>
+        <button id="sheetClose" class="icon-btn flat">×</button>
+      </div>
+      <div class="float-body" id="sheetBody"></div>
+    </div>
+  </main>
+
+  <footer id="bottomBar">
+    <div class="level-track">
+      <button data-level="4"><span class="level-num">4</span> World</button>
+      <span class="sep">/</span>
+      <button data-level="3"><span class="level-num">3</span> Project</button>
+      <span class="sep">/</span>
+      <button data-level="2"><span class="level-num">2</span> Quarter</button>
+      <span class="sep">/</span>
+      <button data-level="1"><span class="level-num">1</span> Agent</button>
+    </div>
+    <div class="spacer"></div>
+    <span id="kitLine" class="mono muted"></span>
+    <span id="operationsLine" class="mono muted"></span>
+  </footer>
+</div>
+<script src="scene-core.js"></script>
+<script src="feed-core.js"></script>
+<script src="markdown-core.js"></script>
+<script src="outcome-core.js"></script>
+<script src="scene.js"></script>
+<script src="workspace.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

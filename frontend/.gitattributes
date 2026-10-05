@@ -1,0 +1,9 @@
+# Byte-exact storage for the whole repository.
+#
+# vendor/frontend-kit/<version>/ is verified before import against the accepted
+# backend delivery in delivery/ (src/host/kit.mjs), and delivery/ itself is
+# pinned by SHA-256. Any end-of-line conversion on checkout - for example
+# core.autocrlf=true on another machine - would silently change those bytes and
+# the application would refuse to start its connection. Nothing here is
+# normalised.
+* -text

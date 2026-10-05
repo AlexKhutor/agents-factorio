@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "kitVersion": "v0.11.0",
+  "taskContractVersion": "v0.3.0",
+  "supportedTaskContractVersions": [
+    "v0.1.0",
+    "v0.2.0",
+    "v0.3.0"
+  ],
+  "reportContractVersion": "v0.2.0",
+  "componentVersions": {
+    "project_tooling_common": "v0.3.4",
+    "accept_orchestrated_task": "v0.1.0",
+    "update_orchestrated_task_progress": "v0.2.0",
+    "confirm_orchestrated_task_plan": "v0.1.0",
+    "submit_orchestrated_report": "v0.4.1",
+    "submit_orchestrated_report_correction": "v0.1.0",
+    "signal_orchestrator": "v0.1.0",
+    "child_agent_kit": "v0.11.0",
+    "child_task_contract": "v0.3.0",
+    "child_report_contract": "v0.2.0"
+  },
+  "commonExcludedFiles": [],
+  "profiles": {
+    "codex": {
+      "provider": "openai",
+      "executorState": "installed",
+      "excludedFiles": []
+    },
+    "claude-handoff": {
+      "provider": "anthropic",
+      "executorState": "foreign-owner-required",
+      "excludedFiles": [
+        ".agents/skills/execute-orchestrated-task/SKILL.md",
+        ".agents/skills/execute-orchestrated-task/agents/openai.yaml",
+        ".agents/skills/signal-orchestrator/SKILL.md",
+        ".agents/skills/signal-orchestrator/agents/openai.yaml"
+      ]
+    },
+    "foreign-provider-handoff": {
+      "provider": "foreign",
+      "executorState": "foreign-owner-required",
+      "excludedFiles": [
+        ".agents/skills/execute-orchestrated-task/SKILL.md",
+        ".agents/skills/execute-orchestrated-task/agents/openai.yaml",
+        ".agents/skills/signal-orchestrator/SKILL.md",
+        ".agents/skills/signal-orchestrator/agents/openai.yaml"
+      ]
+    },
+    "claude-desk": {
+      "provider": "anthropic",
+      "executorState": "installed",
+      "excludedFiles": [
+        ".agents/skills/execute-orchestrated-task/agents/openai.yaml",
+        ".agents/skills/signal-orchestrator/agents/openai.yaml"
+      ]
+    }
+  },
+  "files": [
+    "tools/project_tooling_common.ps1",
+    ".agents/skills/execute-orchestrated-task/SKILL.md",
+    ".agents/skills/execute-orchestrated-task/agents/openai.yaml",
+    ".agents/skills/execute-orchestrated-task/references/task-contract.md",
+    ".agents/skills/execute-orchestrated-task/references/report-contract.md",
+    ".agents/skills/execute-orchestrated-task/scripts/coordination_common.ps1",
+    ".agents/skills/execute-orchestrated-task/scripts/accept_task.ps1",
+    ".agents/skills/execute-orchestrated-task/scripts/confirm_task_plan.ps1",
+    ".agents/skills/execute-orchestrated-task/scripts/update_task_progress.ps1",
+    ".agents/skills/execute-orchestrated-task/scripts/submit_report.ps1",
+    ".agents/skills/execute-orchestrated-task/scripts/submit_report_correction.ps1",
+    ".agents/skills/signal-orchestrator/SKILL.md",
+    ".agents/skills/signal-orchestrator/agents/openai.yaml",
+    ".agents/skills/signal-orchestrator/scripts/signal_orchestrator.ps1",
+    ".orchestrator/templates/report.md",
+    ".orchestrator/schemas/task-progress.schema.json",
+    ".orchestrator/schemas/agent-preview.schema.json",
+    ".orchestrator/schemas/agent-statistics.schema.json",
+    ".orchestrator/schemas/execution-summary.schema.json",
+    ".orchestrator/schemas/worker-progress.schema.json",
+    ".orchestrator/schemas/plan-approval.schema.json",
+    ".orchestrator/schemas/child-report-v0.2.schema.json",
+    ".orchestrator/schemas/report-completion-correction.schema.json",
+    ".orchestrator/schemas/controller-return-binding.schema.json",
+    ".orchestrator/schemas/child-wake-signal.schema.json"
+  ]
+}

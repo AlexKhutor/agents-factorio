@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/utility-validation-runner-request.v1.json",
+  "title": "M10 Backend 2D Utility Validation Runner Request v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "contractVersion",
+    "runId",
+    "protocol",
+    "presentation",
+    "query",
+    "fixture"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "runId": { "$ref": "#/$defs/runId" },
+    "protocol": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version"],
+      "properties": {
+        "id": { "const": "m10-renderer-neutral-utility-validation" },
+        "version": { "const": "v0.1.0" }
+      }
+    },
+    "presentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "commands"],
+      "properties": {
+        "mode": { "const": "2d-diagnostic" },
+        "commands": { "const": "disabled" }
+      }
+    },
+    "query": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "contract"],
+      "properties": {
+        "id": { "const": "overview" },
+        "contract": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "version"],
+          "properties": {
+            "id": { "const": "work-projection-v2" },
+            "version": { "const": "v0.2.0" }
+          }
+        }
+      }
+    },
+    "fixture": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["publishedAtUtc", "scenarios"],
+      "properties": {
+        "publishedAtUtc": { "$ref": "#/$defs/utc" },
+        "scenarios": {
+          "type": "array",
+          "minItems": 8,
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "live",
+              "delayed",
+              "stale",
+              "source-unavailable",
+              "contradictory",
+              "blocked",
+              "decision-required",
+              "recovered"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "runId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,95}$"
+    },
+    "utc": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$",
+      "maxLength": 64
+    }
+  }
+}

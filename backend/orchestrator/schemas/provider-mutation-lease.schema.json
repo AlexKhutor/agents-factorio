@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/provider-mutation-lease.schema.json",
+  "title": "Provider Mutation Lease Ledger v0.2.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "contractVersion", "projectId", "revision",
+    "archivedRecordCount", "archivedThroughRevision", "records"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.2.0" },
+    "projectId": { "$ref": "#/$defs/id" },
+    "revision": { "$ref": "#/$defs/revision" },
+    "archivedRecordCount": { "$ref": "#/$defs/nonnegativeRevision" },
+    "archivedThroughRevision": { "$ref": "#/$defs/nonnegativeRevision" },
+    "records": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 256,
+      "items": { "$ref": "#/$defs/record" }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$"
+    },
+    "operation": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9._:/-]{0,159}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "utc": {
+      "type": "string",
+      "format": "date-time",
+      "maxLength": 32,
+      "pattern": "Z$"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "nonnegativeRevision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "owner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceId", "runtimeInstanceId", "threadId", "operation",
+        "operationId", "correlationId"
+      ],
+      "properties": {
+        "sourceId": { "$ref": "#/$defs/id" },
+        "runtimeInstanceId": { "$ref": "#/$defs/id" },
+        "threadId": { "$ref": "#/$defs/id" },
+        "operation": { "$ref": "#/$defs/operation" },
+        "operationId": { "$ref": "#/$defs/id" },
+        "correlationId": { "$ref": "#/$defs/id" }
+      }
+    },
+    "record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "owner", "intentSha256", "leaseId", "state", "outcome",
+        "receiptSha256", "acquiredAtUtc", "renewedAtUtc", "expiresAtUtc",
+        "settledAtUtc", "fencingRevision", "revision"
+      ],
+      "properties": {
+        "owner": { "$ref": "#/$defs/owner" },
+        "intentSha256": { "$ref": "#/$defs/sha256" },
+        "leaseId": { "$ref": "#/$defs/id" },
+        "state": { "enum": ["active", "uncertain", "released"] },
+        "outcome": {
+          "oneOf": [
+            { "type": "null" },
+            { "enum": ["applied", "not-applied", "uncertain"] }
+          ]
+        },
+        "receiptSha256": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/sha256" }]
+        },
+        "acquiredAtUtc": { "$ref": "#/$defs/utc" },
+        "renewedAtUtc": { "$ref": "#/$defs/utc" },
+        "expiresAtUtc": { "$ref": "#/$defs/utc" },
+        "settledAtUtc": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/utc" }]
+        },
+        "fencingRevision": { "$ref": "#/$defs/revision" },
+        "revision": { "$ref": "#/$defs/revision" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "state": { "const": "active" } } },
+          "then": {
+            "properties": {
+              "outcome": { "type": "null" },
+              "receiptSha256": { "type": "null" },
+              "settledAtUtc": { "type": "null" }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "state": { "const": "uncertain" } } },
+          "then": {
+            "properties": {
+              "outcome": { "const": "uncertain" },
+              "settledAtUtc": { "$ref": "#/$defs/utc" }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "state": { "const": "released" } } },
+          "then": {
+            "properties": {
+              "outcome": { "enum": ["applied", "not-applied"] },
+              "receiptSha256": { "$ref": "#/$defs/sha256" },
+              "settledAtUtc": { "$ref": "#/$defs/utc" }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

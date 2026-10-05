@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/child-chat-creations.v1.schema.json",
+  "title": "Managed OpenAI Codex child chat creation attempts v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "sources"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "sources": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/attempt" }
+    }
+  },
+  "$defs": {
+    "threadIds": {
+      "type": "array",
+      "maxItems": 512,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"
+      }
+    },
+    "evidenceState": {
+      "enum": ["pending", "found", "absent", "unavailable"]
+    },
+    "attempt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "attemptId",
+        "sourceId",
+        "launchId",
+        "workspaceFingerprint",
+        "codexHomeFingerprint",
+        "requestedName",
+        "state",
+        "phase",
+        "uncertain",
+        "startedAtUtc",
+        "updatedAtUtc",
+        "lastHeartbeatAtUtc",
+        "timeoutAtUtc",
+        "action",
+        "providerThreadId",
+        "candidateThreadIds",
+        "baseline",
+        "evidence",
+        "timingsMs",
+        "boundAtUtc",
+        "lastErrorCode"
+      ],
+      "properties": {
+        "attemptId": { "type": "string", "format": "uuid" },
+        "sourceId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{1,63}$" },
+        "launchId": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "workspaceFingerprint": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "codexHomeFingerprint": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "requestedName": { "type": ["string", "null"], "maxLength": 180 },
+        "state": { "enum": ["absent", "pending", "found", "ambiguous", "timeout"] },
+        "phase": {
+          "enum": ["baseline", "provider-action", "reconciliation", "binding", "bound", "terminal"]
+        },
+        "uncertain": { "type": "boolean" },
+        "startedAtUtc": { "type": "string", "format": "date-time" },
+        "updatedAtUtc": { "type": "string", "format": "date-time" },
+        "lastHeartbeatAtUtc": { "type": "string", "format": "date-time" },
+        "timeoutAtUtc": { "type": "string", "format": "date-time" },
+        "action": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["state", "startedAtUtc", "completedAtUtc", "errorCode"],
+          "properties": {
+            "state": { "enum": ["not_started", "invoking", "confirmed", "uncertain", "absent"] },
+            "startedAtUtc": { "type": ["string", "null"], "format": "date-time" },
+            "completedAtUtc": { "type": ["string", "null"], "format": "date-time" },
+            "errorCode": { "type": ["string", "null"], "maxLength": 128 }
+          }
+        },
+        "providerThreadId": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"
+        },
+        "candidateThreadIds": { "$ref": "#/$defs/threadIds" },
+        "baseline": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["indexThreadIds", "stateThreadIds"],
+          "properties": {
+            "indexThreadIds": { "$ref": "#/$defs/threadIds" },
+            "stateThreadIds": { "$ref": "#/$defs/threadIds" }
+          }
+        },
+        "evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["provider", "sessionIndex", "stateDatabase", "rollout"],
+          "properties": {
+            "provider": { "$ref": "#/$defs/evidenceState" },
+            "sessionIndex": { "$ref": "#/$defs/evidenceState" },
+            "stateDatabase": { "$ref": "#/$defs/evidenceState" },
+            "rollout": { "$ref": "#/$defs/evidenceState" }
+          }
+        },
+        "timingsMs": { "$ref": "#/$defs/timings" },
+        "boundAtUtc": { "type": ["string", "null"], "format": "date-time" },
+        "lastErrorCode": { "type": ["string", "null"], "maxLength": 128 }
+      }
+    },
+    "timings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "providerAction",
+        "providerDiscovery",
+        "stateDatabaseReconciliation",
+        "uiAction",
+        "finalBinding",
+        "total"
+      ],
+      "properties": {
+        "providerAction": { "type": ["integer", "null"], "minimum": 0 },
+        "providerDiscovery": { "type": ["integer", "null"], "minimum": 0 },
+        "stateDatabaseReconciliation": { "type": ["integer", "null"], "minimum": 0 },
+        "uiAction": { "type": ["integer", "null"], "minimum": 0 },
+        "finalBinding": { "type": ["integer", "null"], "minimum": 0 },
+        "total": { "type": ["integer", "null"], "minimum": 0 }
+      }
+    }
+  }
+}

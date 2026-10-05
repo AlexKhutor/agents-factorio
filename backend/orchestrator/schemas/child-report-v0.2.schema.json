@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/child-report.v0.2.0.json",
+  "title": "Child Report Metadata v0.2.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "contractVersion",
+    "reportId",
+    "taskId",
+    "sourceId",
+    "status",
+    "summary",
+    "sourceRevision",
+    "sourceDocument",
+    "taskSha256",
+    "reportFile",
+    "reportSha256",
+    "progressFile",
+    "progressSha256",
+    "executionSummaryFile",
+    "executionSummarySha256",
+    "reportedAtUtc"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.2.0" },
+    "reportId": { "$ref": "#/$defs/reportId" },
+    "taskId": { "$ref": "#/$defs/id" },
+    "sourceId": { "$ref": "#/$defs/id" },
+    "status": { "enum": ["completed", "blocked", "failed"] },
+    "summary": { "type": "string", "minLength": 1, "maxLength": 2048 },
+    "sourceRevision": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "sourceDocument": { "$ref": "#/$defs/path" },
+    "taskSha256": { "$ref": "#/$defs/sha256" },
+    "reportFile": { "$ref": "#/$defs/path" },
+    "reportSha256": { "$ref": "#/$defs/sha256" },
+    "progressFile": { "$ref": "#/$defs/path" },
+    "progressSha256": { "$ref": "#/$defs/sha256" },
+    "executionSummaryFile": { "$ref": "#/$defs/path" },
+    "executionSummarySha256": { "$ref": "#/$defs/sha256" },
+    "reportedAtUtc": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,95}$" },
+    "reportId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$" },
+    "path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024,
+      "not": { "pattern": "^(?:[a-zA-Z]:[\\\\/]|\\\\\\\\|[a-zA-Z][a-zA-Z0-9+.-]*:)" }
+    },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/application-conversation-archive.v1.json",
+  "title": "Application Conversation Archive v0.2.0",
+  "oneOf": [{ "$ref": "#/$defs/resolution" }, { "$ref": "#/$defs/page" }],
+  "$defs": {
+    "id": { "type": "string", "minLength": 1, "maxLength": 512 },
+    "nullableId": { "oneOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }] },
+    "conversationId": { "type": "string", "pattern": "^conversation:[a-f0-9]{64}$" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "utc": { "type": "string", "format": "date-time", "maxLength": 32, "pattern": "Z$" },
+    "state": { "enum": ["requested", "accepted", "started", "completed", "failed", "interrupted", "uncertain", "unknown"] },
+    "kind": { "enum": ["submission", "message", "activity", "delivery", "interaction", "omission"] },
+    "omission": { "enum": ["hidden_reasoning", "unsupported_content", "oversized_content", "inline_media", "private_content", "content_not_provided", "history_not_imported", "provider_unavailable"] },
+    "record": {
+      "type": "object", "additionalProperties": false,
+      "required": ["recordId", "kind", "role", "state", "text", "providerTurnId", "providerItemId", "requestId", "occurredAtUtc", "omissions"],
+      "properties": {
+        "recordId": { "$ref": "#/$defs/id" }, "kind": { "$ref": "#/$defs/kind" },
+        "role": { "enum": [null, "user", "assistant", "tool", "system"] },
+        "state": { "$ref": "#/$defs/state" },
+        "text": { "type": ["string", "null"], "maxLength": 262144 },
+        "providerTurnId": { "$ref": "#/$defs/nullableId" },
+        "providerItemId": { "$ref": "#/$defs/nullableId" },
+        "requestId": { "$ref": "#/$defs/nullableId" },
+        "occurredAtUtc": { "oneOf": [{ "$ref": "#/$defs/utc" }, { "type": "null" }] },
+        "omissions": { "type": "array", "maxItems": 8, "uniqueItems": true, "items": { "$ref": "#/$defs/omission" } }
+      }
+    },
+    "entry": {
+      "type": "object", "additionalProperties": false,
+      "required": ["firstSequence", "sequence", "contentSha256", "observedAtUtc", "record"],
+      "properties": {
+        "firstSequence": { "type": "integer", "minimum": 1 },
+        "sequence": { "type": "integer", "minimum": 1 },
+        "contentSha256": { "$ref": "#/$defs/sha256" },
+        "observedAtUtc": { "$ref": "#/$defs/utc" },
+        "record": { "$ref": "#/$defs/record" }
+      }
+    },
+    "capture": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "reasonCode", "synchronization"],
+      "properties": {
+        "status": { "enum": ["available", "unavailable"] },
+        "reasonCode": { "enum": ["available", "provider_unavailable", "archive_capture_failed"] },
+        "synchronization": { "$ref": "#/$defs/synchronization" }
+      }
+    },
+    "synchronization": {
+      "type": "object", "additionalProperties": false,
+      "required": ["state", "pagesImported", "capturedRecords", "checkpointRevision", "exhausted"],
+      "properties": {
+        "state": { "enum": ["not-started", "running", "caught-up", "partial", "failed"] },
+        "pagesImported": { "type": "integer", "minimum": 0, "maximum": 256 },
+        "capturedRecords": { "type": "integer", "minimum": 0 },
+        "checkpointRevision": { "type": "integer", "minimum": 0 },
+        "exhausted": { "type": "boolean" }
+      }
+    },
+    "resolution": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "contractVersion", "conversationId", "sourceId", "providerId", "coverage", "capture"],
+      "properties": {
+        "schemaVersion": { "const": 1 }, "contractVersion": { "const": "v0.2.0" },
+        "conversationId": { "$ref": "#/$defs/conversationId" },
+        "sourceId": { "$ref": "#/$defs/id" }, "providerId": { "$ref": "#/$defs/id" },
+        "coverage": { "const": "captured-only" }, "capture": { "$ref": "#/$defs/capture" }
+      }
+    },
+    "page": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "contractVersion", "conversationId", "revision", "coverage", "items", "nextCursor"],
+      "properties": {
+        "schemaVersion": { "const": 1 }, "contractVersion": { "const": "v0.2.0" },
+        "conversationId": { "$ref": "#/$defs/conversationId" },
+        "revision": { "type": "integer", "minimum": 0 }, "coverage": { "const": "captured-only" },
+        "items": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/entry" } },
+        "nextCursor": { "type": ["string", "null"], "maxLength": 1024 }
+      }
+    }
+  }
+}

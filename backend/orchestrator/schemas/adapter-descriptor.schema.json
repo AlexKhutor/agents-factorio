@@ -1,0 +1,155 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/adapter-descriptor.v1.json",
+  "title": "Versioned adapter descriptor v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "contractVersion", "identity", "authority", "capabilities",
+    "capabilitiesObservedAtUtc", "capabilitiesValidForSeconds", "extensions"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.3.0" },
+    "identity": { "$ref": "adapter-common.schema.json#/$defs/identity" },
+    "authority": { "$ref": "authority-reference.schema.json" },
+    "capabilities": {
+      "type": "array", "minItems": 1, "maxItems": 15, "uniqueItems": true,
+      "items": { "$ref": "#/$defs/capability" }
+    },
+    "capabilitiesObservedAtUtc": { "$ref": "adapter-common.schema.json#/$defs/utc" },
+    "capabilitiesValidForSeconds": { "type": "integer", "minimum": 1, "maximum": 86400 },
+    "extensions": {
+      "type": "array", "maxItems": 16, "uniqueItems": true,
+      "items": { "$ref": "adapter-common.schema.json#/$defs/extensionHeader" }
+    }
+  },
+  "allOf": [{
+    "if": {
+      "properties": {
+        "identity": {
+          "type": "object",
+          "properties": { "adapterFamily": { "const": "semantic-work-source" } },
+          "required": ["adapterFamily"]
+        }
+      }
+    },
+    "then": {
+      "properties": {
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": { "interruptBehavior": { "const": "not-applicable" } }
+          }
+        }
+      }
+    }
+  }],
+  "$defs": {
+    "capability": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "operation", "support", "contractVersions", "guarantees", "visibility",
+        "interruptBehavior", "recovery", "limits", "extensions"
+      ],
+      "properties": {
+        "operation": { "$ref": "adapter-common.schema.json#/$defs/operation" },
+        "support": { "enum": ["native", "emulated", "experimental", "degraded", "unavailable"] },
+        "contractVersions": {
+          "type": "array", "minItems": 1, "maxItems": 8, "uniqueItems": true,
+          "contains": { "const": "v0.3.0" },
+          "items": { "$ref": "adapter-common.schema.json#/$defs/version" }
+        },
+        "guarantees": {
+          "type": "array", "maxItems": 11, "uniqueItems": true,
+          "items": { "enum": ["command-acceptance", "accepted-started-separate", "accepted-terminal-separate", "provider-observed-start", "provider-observed-terminal", "ordered-lifecycle", "cursor-replay", "exact-native-identity", "single-writer-required", "exact-task-binding", "exact-profile-binding"] }
+        },
+        "visibility": { "enum": ["provider-observed", "platform-visible", "headless", "none"] },
+        "interruptBehavior": { "enum": ["not-applicable", "unsupported", "cooperative", "immediate", "provider-defined"] },
+        "recovery": {
+          "type": "array", "minItems": 1, "maxItems": 5, "uniqueItems": true,
+          "items": { "enum": ["none", "reconnect", "cursor-replay", "resume", "read-after-disconnect"] }
+        },
+        "limits": {
+          "type": "object", "maxProperties": 32,
+          "propertyNames": { "pattern": "^[A-Za-z][A-Za-z0-9_]{0,95}$" },
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        },
+        "extensions": {
+          "type": "array", "maxItems": 16, "uniqueItems": true,
+          "items": { "$ref": "adapter-common.schema.json#/$defs/extensionHeader" }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "guarantees": { "type": "array", "contains": { "const": "cursor-replay" } } } },
+          "then": { "properties": { "recovery": { "type": "array", "contains": { "const": "cursor-replay" } } } }
+        },
+        {
+          "if": {
+            "properties": {
+              "guarantees": {
+                "type": "array",
+                "contains": { "enum": ["provider-observed-start", "provider-observed-terminal"] }
+              }
+            }
+          },
+          "then": { "properties": { "visibility": { "const": "provider-observed" } } }
+        },
+        {
+          "if": {
+            "properties": {
+              "guarantees": {
+                "type": "array",
+                "contains": { "enum": ["accepted-started-separate", "accepted-terminal-separate"] }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "guarantees": { "type": "array", "contains": { "const": "command-acceptance" } }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "operation": { "enum": ["interruptExecution", "resumeExecution", "cancelExecution"] },
+              "support": { "not": { "const": "unavailable" } }
+            },
+            "required": ["operation", "support"]
+          },
+          "then": {
+            "properties": {
+              "interruptBehavior": { "enum": ["cooperative", "immediate", "provider-defined"] }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "guarantees": {
+                "type": "array",
+                "contains": { "enum": ["exact-task-binding", "exact-profile-binding"] }
+              }
+            }
+          },
+          "then": { "properties": { "operation": { "const": "startExecution" } } }
+        },
+        {
+          "if": {
+            "properties": {
+              "guarantees": { "type": "array", "contains": { "const": "exact-profile-binding" } }
+            }
+          },
+          "then": {
+            "properties": {
+              "guarantees": { "type": "array", "contains": { "const": "exact-task-binding" } }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/intervention-preview.v1.json",
+  "title": "Projected Child Intervention Preview v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["eventId", "sourceId", "taskId", "threadId", "turnId", "state", "initiator", "actor", "attribution", "reason", "observedAtUtc", "availableActions"],
+  "properties": {
+    "eventId": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "sourceId": { "type": "string", "minLength": 1, "maxLength": 96 },
+    "taskId": { "type": "string", "minLength": 1, "maxLength": 96 },
+    "threadId": { "type": ["string", "null"], "maxLength": 256 },
+    "turnId": { "type": ["string", "null"], "maxLength": 256 },
+    "state": { "const": "awaiting_operator" },
+    "initiator": { "enum": ["operator-ui", "unknown"] },
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "id"],
+      "properties": {
+        "type": { "enum": ["human", "unknown"] },
+        "id": { "type": "string", "minLength": 1, "maxLength": 96 }
+      }
+    },
+    "attribution": { "enum": ["correlated", "unknown"] },
+    "reason": { "type": ["string", "null"], "maxLength": 512 },
+    "observedAtUtc": { "type": "string", "format": "date-time" },
+    "availableActions": {
+      "type": "array",
+      "maxItems": 2,
+      "uniqueItems": true,
+      "items": { "enum": ["resume", "cancel"] }
+    }
+  }
+}

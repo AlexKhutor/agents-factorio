@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/agent-preview.v1.json",
+  "title": "Agent Preview Projection v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "agentId",
+    "taskId",
+    "kind",
+    "role",
+    "state",
+    "currentAction",
+    "blockers",
+    "updatedAtUtc",
+    "freshness",
+    "capabilities"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "agentId": { "$ref": "#/$defs/id" },
+    "parentAgentId": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/id" }
+      ]
+    },
+    "taskId": { "$ref": "#/$defs/id" },
+    "kind": { "enum": ["coordinator", "primary", "subagent", "reviewer", "tool-runner"] },
+    "role": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "provider": { "type": ["string", "null"], "maxLength": 64 },
+    "state": {
+      "enum": [
+        "registered",
+        "starting",
+        "running",
+        "waiting",
+        "blocked",
+        "cancellation_requested",
+        "interrupted",
+        "completed",
+        "failed",
+        "stop_unconfirmed",
+        "stale"
+      ]
+    },
+    "currentAction": { "type": "string", "maxLength": 512 },
+    "lastCompleted": { "type": ["string", "null"], "maxLength": 512 },
+    "nextAction": { "type": ["string", "null"], "maxLength": 512 },
+    "blockers": {
+      "type": "array",
+      "maxItems": 20,
+      "items": { "type": "string", "maxLength": 256 }
+    },
+    "startedAtUtc": { "type": ["string", "null"], "format": "date-time" },
+    "lastHeartbeatUtc": { "type": ["string", "null"], "format": "date-time" },
+    "semanticUpdatedAtUtc": { "type": ["string", "null"], "format": "date-time" },
+    "updatedAtUtc": { "type": "string", "format": "date-time" },
+    "freshness": { "enum": ["live", "delayed", "stale", "unknown"] },
+    "heartbeatAgeSeconds": { "type": ["integer", "null"], "minimum": 0 },
+    "semanticAgeSeconds": { "type": ["integer", "null"], "minimum": 0 },
+    "externalReferences": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "threadId": { "type": ["string", "null"], "maxLength": 256 },
+        "turnId": { "type": ["string", "null"], "maxLength": 256 }
+      }
+    },
+    "statistics": { "$ref": "agent-statistics.schema.json" },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["canInterrupt"],
+      "properties": {
+        "canInterrupt": { "type": "boolean" }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,95}$"
+    }
+  }
+}

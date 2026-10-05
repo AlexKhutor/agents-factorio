@@ -1,0 +1,4 @@
+interface:
+  display_name: "Execute Orchestrated Task"
+  short_description: "Accept, execute, and report a bounded task"
+  default_prompt: "Use $execute-orchestrated-task to process the named task only inside this workspace's ownership; report and stop on an unexpected foreign bug."

@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/workflow-checkpoint-source-bundle.v1.json",
+  "title": "Workflow checkpoint source bundle v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "contractVersion", "evaluatedAtUtc", "staleAfterSeconds",
+    "taskArtifact", "progressArtifact", "planApprovalArtifact",
+    "returnBindingArtifact", "reportMetadataArtifact", "acceptanceArtifact",
+    "controlSnapshotArtifact", "interventionArtifacts", "adapterArtifact",
+    "executionArtifact", "dependencyArtifact"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "evaluatedAtUtc": { "$ref": "#/$defs/utc" },
+    "staleAfterSeconds": { "type": "integer", "minimum": 1, "maximum": 86400 },
+    "taskArtifact": { "$ref": "#/$defs/artifact" },
+    "progressArtifact": { "$ref": "#/$defs/artifact" },
+    "planApprovalArtifact": { "$ref": "#/$defs/optionalArtifact" },
+    "returnBindingArtifact": { "$ref": "#/$defs/optionalArtifact" },
+    "reportMetadataArtifact": { "$ref": "#/$defs/optionalArtifact" },
+    "acceptanceArtifact": { "$ref": "#/$defs/optionalArtifact" },
+    "controlSnapshotArtifact": { "$ref": "#/$defs/artifact" },
+    "interventionArtifacts": {
+      "type": "array",
+      "maxItems": 32,
+      "items": { "$ref": "#/$defs/artifact" }
+    },
+    "adapterArtifact": { "$ref": "#/$defs/optionalArtifact" },
+    "executionArtifact": { "$ref": "#/$defs/optionalArtifact" },
+    "dependencyArtifact": { "$ref": "#/$defs/optionalArtifact" }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "utc": {
+      "type": "string",
+      "maxLength": 64,
+      "format": "date-time",
+      "pattern": "Z$"
+    },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z0-9._-][A-Za-z0-9._/-]{0,511}$",
+      "not": { "pattern": "(?:^|/)\\.\\.(?:/|$)" }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["body", "sha256", "observedAtUtc", "locator", "authority"],
+      "properties": {
+        "body": { "type": "object" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "observedAtUtc": { "$ref": "#/$defs/utc" },
+        "locator": { "$ref": "#/$defs/relativePath" },
+        "authority": { "$ref": "authority-reference.schema.json" }
+      }
+    },
+    "optionalArtifact": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/artifact" }]
+    }
+  }
+}

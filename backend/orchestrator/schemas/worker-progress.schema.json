@@ -1,0 +1,228 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/worker-progress.v1.json",
+  "title": "Child Workspace Progress v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "contractVersion",
+    "sequence",
+    "taskId",
+    "sourceId",
+    "title",
+    "state",
+    "phase",
+    "summary",
+    "plan",
+    "agents",
+    "stopEvents",
+    "startedAtUtc",
+    "updatedAtUtc"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "enum": ["v0.2.0", "v0.3.0"] },
+    "sequence": { "type": "integer", "minimum": 1 },
+    "taskId": { "$ref": "#/$defs/id" },
+    "sourceId": { "$ref": "#/$defs/id" },
+    "title": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "state": {
+      "enum": ["accepted", "running", "waiting", "blocked", "cancelling", "cancelled", "completed", "failed", "stop_unconfirmed"]
+    },
+    "phase": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["now", "done", "next", "blockers"],
+      "properties": {
+        "now": { "type": "string", "maxLength": 512 },
+        "done": { "type": "array", "maxItems": 20, "items": { "type": "string", "maxLength": 256 } },
+        "next": { "type": "array", "maxItems": 20, "items": { "type": "string", "maxLength": 256 } },
+        "blockers": { "type": "array", "maxItems": 20, "items": { "type": "string", "maxLength": 256 } },
+        "provenance": { "$ref": "#/$defs/summaryProvenance" }
+      }
+    },
+    "plan": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "title", "state"],
+        "properties": {
+          "id": { "$ref": "#/$defs/id" },
+          "title": { "type": "string", "minLength": 1, "maxLength": 256 },
+          "state": { "enum": ["pending", "running", "completed", "blocked", "cancelled", "failed"] },
+          "startedAtUtc": { "type": ["string", "null"], "format": "date-time" }
+        }
+      }
+    },
+    "agents": {
+      "type": "array",
+      "maxItems": 256,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["agentId", "kind", "role", "state", "currentAction", "blockers", "canInterrupt", "updatedAtUtc"],
+        "properties": {
+          "agentId": { "$ref": "#/$defs/id" },
+          "parentAgentId": { "type": ["string", "null"], "pattern": "^[a-z0-9][a-z0-9._-]{0,95}$" },
+          "kind": { "enum": ["primary", "subagent", "tool-runner"] },
+          "role": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "provider": { "type": ["string", "null"], "maxLength": 64 },
+          "state": {
+            "enum": ["registered", "starting", "running", "waiting", "blocked", "cancellation_requested", "interrupted", "completed", "failed", "stop_unconfirmed", "stale"]
+          },
+          "currentAction": { "type": "string", "maxLength": 512 },
+          "lastCompleted": { "type": ["string", "null"], "maxLength": 512 },
+          "nextAction": { "type": ["string", "null"], "maxLength": 512 },
+          "blockers": { "type": "array", "maxItems": 20, "items": { "type": "string", "maxLength": 256 } },
+          "canInterrupt": { "type": "boolean" },
+          "startedAtUtc": { "type": ["string", "null"], "format": "date-time" },
+          "lastHeartbeatUtc": { "type": ["string", "null"], "format": "date-time" },
+          "semanticUpdatedAtUtc": { "type": ["string", "null"], "format": "date-time" },
+          "statistics": { "type": "object" },
+          "updatedAtUtc": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "path"],
+        "properties": {
+          "kind": { "enum": ["report", "acceptance", "decision", "test", "artifact", "log-summary", "progress", "execution-summary"] },
+          "path": { "type": "string", "minLength": 1, "maxLength": 1024 },
+          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        }
+      }
+    },
+    "stopEvents": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["scope", "status", "atUtc"],
+        "properties": {
+          "scope": { "enum": ["task", "agent", "all"] },
+          "targetId": { "type": ["string", "null"], "maxLength": 192 },
+          "status": { "enum": ["requested", "confirmed", "unconfirmed"] },
+          "reason": { "type": ["string", "null"], "maxLength": 512 },
+          "atUtc": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    "workflow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["policy", "lifecycleStage", "intent", "plan", "lastRuleCheckpoint", "ruleCheckpoints"],
+      "properties": {
+        "policy": { "const": "intent-confirm-plan-v1" },
+        "lifecycleStage": {
+          "enum": ["understanding", "clarification", "planning", "awaiting_confirmation", "implementation", "validation", "reporting", "complete"]
+        },
+        "intent": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["statement", "desiredOutcomes", "status", "confirmedBy", "confirmedAtUtc"],
+          "properties": {
+            "statement": { "type": "string", "minLength": 1, "maxLength": 16384 },
+            "desiredOutcomes": { "type": "array", "minItems": 1, "maxItems": 50, "items": { "type": "string", "minLength": 1, "maxLength": 1024 } },
+            "status": { "const": "confirmed" },
+            "confirmedBy": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "confirmedAtUtc": { "type": "string", "format": "date-time" }
+          }
+        },
+        "plan": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["revision", "sha256", "status", "approvalPath", "confirmedBy", "confirmedAtUtc"],
+          "properties": {
+            "revision": { "type": "integer", "minimum": 0 },
+            "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+            "status": { "enum": ["draft", "awaiting_confirmation", "confirmed"] },
+            "approvalPath": { "type": ["string", "null"], "maxLength": 1024 },
+            "confirmedBy": { "type": ["string", "null"], "maxLength": 128 },
+            "confirmedAtUtc": { "type": ["string", "null"], "format": "date-time" }
+          }
+        },
+        "lastRuleCheckpoint": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/ruleCheckpoint" }
+          ]
+        },
+        "ruleCheckpoints": {
+          "type": "array",
+          "maxItems": 50,
+          "items": { "$ref": "#/$defs/ruleCheckpoint" }
+        }
+      }
+    },
+    "timing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["semanticUpdatedAtUtc", "lastHeartbeatUtc", "heartbeatIntervalSeconds", "nextHeartbeatDueAtUtc"],
+      "properties": {
+        "semanticUpdatedAtUtc": { "type": "string", "format": "date-time" },
+        "lastHeartbeatUtc": { "type": "string", "format": "date-time" },
+        "heartbeatIntervalSeconds": { "type": "integer", "minimum": 30, "maximum": 60 },
+        "nextHeartbeatDueAtUtc": { "type": "string", "format": "date-time" }
+      }
+    },
+    "startedAtUtc": { "type": "string", "format": "date-time" },
+    "updatedAtUtc": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,95}$" },
+    "summaryProvenance": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "properties": { "kind": { "const": "source" } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "properties": { "kind": { "const": "deterministic" } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "provider", "model", "reasoningEffort"],
+          "properties": {
+            "kind": { "const": "model-derived" },
+            "provider": { "type": "string", "minLength": 1, "maxLength": 96 },
+            "model": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "reasoningEffort": { "type": "string", "minLength": 1, "maxLength": 32 }
+          }
+        }
+      ]
+    },
+    "ruleCheckpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "policy", "planRevision", "recordedAtUtc"],
+      "properties": {
+        "kind": { "enum": ["task_start", "context_recovery", "pre_implementation", "plan_change", "pre_delegation", "pre_completion"] },
+        "policy": { "const": "intent-confirm-plan-v1" },
+        "planRevision": { "type": "integer", "minimum": 0 },
+        "recordedAtUtc": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "contractVersion": { "const": "v0.3.0" } } },
+      "then": { "required": ["workflow", "timing"] }
+    }
+  ]
+}

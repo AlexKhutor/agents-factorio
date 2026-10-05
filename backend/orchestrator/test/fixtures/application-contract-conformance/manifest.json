@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "contractVersion": "v0.1.0",
+  "fixtureSet": "application-contract-conformance",
+  "requestSha256": "f423f385c371af062be839bad2818da68c38af1168a45708b8dc0b6987711f1e",
+  "resultSha256": "88d0379536c74390ffb327f74156072baa14d2b82259fee5fe530f41ca0286bb",
+  "transportNames": [
+    "filesystem-json",
+    "stdio-jsonl",
+    "ipc-clone",
+    "loopback-json"
+  ],
+  "privacyFixtureIds": [
+    "credential-field",
+    "raw-history",
+    "ui-layout",
+    "inline-media",
+    "absolute-path",
+    "second-task-authority"
+  ]
+}

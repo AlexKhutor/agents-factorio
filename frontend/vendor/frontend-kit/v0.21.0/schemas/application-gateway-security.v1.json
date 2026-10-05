@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/application-gateway-security.v1.json",
+  "title": "Application gateway security policy v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "contractVersion", "transportId", "listener", "session",
+    "allowedOrigins", "limits"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "transportId": { "const": "loopback-http-json-ndjson-v1" },
+    "listener": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["host", "family", "portStrategy", "requestedPort"],
+      "properties": {
+        "host": { "const": "127.0.0.1" },
+        "family": { "const": "ipv4" },
+        "portStrategy": { "const": "os-assigned" },
+        "requestedPort": { "const": 0 }
+      }
+    },
+    "session": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sessionId", "instanceId", "lifecycleIdentitySha256",
+        "workspaceRootSha256", "bearerSha256", "issuedAtUtc", "expiresAtUtc"
+      ],
+      "properties": {
+        "sessionId": { "type": "string", "format": "uuid" },
+        "instanceId": { "type": "string", "format": "uuid" },
+        "lifecycleIdentitySha256": { "$ref": "#/$defs/sha256" },
+        "workspaceRootSha256": { "$ref": "#/$defs/sha256" },
+        "bearerSha256": { "$ref": "#/$defs/sha256" },
+        "issuedAtUtc": { "type": "string", "format": "date-time" },
+        "expiresAtUtc": { "type": "string", "format": "date-time" }
+      }
+    },
+    "allowedOrigins": {
+      "type": "array",
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {
+        "type": "string", "format": "uri", "minLength": 8, "maxLength": 512,
+        "pattern": "^http://127\\.0\\.0\\.1:[0-9]{1,5}$"
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maximumHeaderBytes", "maximumRequestBytes", "requestTimeoutMs",
+        "maximumSessionLifetimeMs", "maximumAllowedOrigins"
+      ],
+      "properties": {
+        "maximumHeaderBytes": { "const": 16384 },
+        "maximumRequestBytes": { "const": 1179648 },
+        "requestTimeoutMs": { "const": 15000 },
+        "maximumSessionLifetimeMs": { "const": 86400000 },
+        "maximumAllowedOrigins": { "const": 8 }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/application-interaction-authority-view.v0.1.0.json",
+  "title": "Application Interaction Authority View v0.1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "contractVersion", "authorityKind", "authorityId",
+    "sourceId", "taskId", "interactionType", "status", "ownerResponse",
+    "authorityOutcome", "sourceRevision", "occurredAtUtc", "artifact",
+    "viewSha256"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "authorityKind": {
+      "enum": ["plan-approval", "child-intervention", "deterministic-acceptance"]
+    },
+    "authorityId": { "$ref": "#/$defs/id" },
+    "sourceId": { "$ref": "#/$defs/id" },
+    "taskId": { "$ref": "#/$defs/id" },
+    "interactionType": {
+      "enum": ["plan-confirmation", "intervention", "report-decision"]
+    },
+    "status": { "enum": ["awaiting-owner", "resolved"] },
+    "ownerResponse": {
+      "oneOf": [
+        { "type": "null" },
+        { "enum": ["confirm", "resume", "cancel"] }
+      ]
+    },
+    "authorityOutcome": {
+      "enum": ["confirmed", "awaiting_operator", "resolved", "passed"]
+    },
+    "sourceRevision": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "occurredAtUtc": { "type": "string", "format": "date-time" },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaId", "artifactSha256", "canonicalSha256"],
+      "properties": {
+        "schemaId": { "type": "string", "format": "uri" },
+        "artifactSha256": { "$ref": "#/$defs/sha256" },
+        "canonicalSha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "viewSha256": { "$ref": "#/$defs/sha256" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

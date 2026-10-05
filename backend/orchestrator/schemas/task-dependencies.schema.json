@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/task-dependencies.v1.json",
+  "title": "Source-qualified task dependencies v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "contractVersion", "sourceId", "taskId",
+    "taskSha256", "dependencies"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "sourceId": { "$ref": "#/$defs/id" },
+    "taskId": { "$ref": "#/$defs/id" },
+    "taskSha256": { "$ref": "#/$defs/sha256" },
+    "dependencies": {
+      "type": "array",
+      "maxItems": 64,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/dependency" }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "dependency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dependencyId", "targetSourceId", "targetTaskId",
+        "relationship", "state"
+      ],
+      "properties": {
+        "dependencyId": { "$ref": "#/$defs/id" },
+        "targetSourceId": { "$ref": "#/$defs/id" },
+        "targetTaskId": { "$ref": "#/$defs/id" },
+        "relationship": { "$ref": "#/$defs/id" },
+        "state": {
+          "enum": ["satisfied", "waiting", "blocked", "unknown"]
+        }
+      }
+    }
+  }
+}

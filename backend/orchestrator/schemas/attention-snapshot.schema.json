@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/attention-snapshot.v1.json",
+  "title": "Human Attention Snapshot v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "modelVersion",
+    "source",
+    "mode",
+    "health",
+    "attentionRequired",
+    "counts",
+    "longestWaitingForHumanSeconds",
+    "topEventIds",
+    "events",
+    "truncated",
+    "totalCandidates",
+    "generatedAtUtc"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "modelVersion": { "const": "v0.1.0" },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["controlSchemaVersion", "controlSequence", "controlGeneratedAtUtc"],
+      "properties": {
+        "controlSchemaVersion": { "const": 1 },
+        "controlSequence": { "type": "integer", "minimum": 0 },
+        "controlGeneratedAtUtc": { "type": "string", "format": "date-time" }
+      }
+    },
+    "mode": { "enum": ["running", "paused", "draining", "emergency_stopped"] },
+    "health": { "enum": ["ready", "busy", "degraded", "stopped"] },
+    "attentionRequired": { "type": "boolean" },
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total", "critical", "high", "medium", "low", "waitingForHuman"],
+      "properties": {
+        "total": { "type": "integer", "minimum": 0, "maximum": 256 },
+        "critical": { "type": "integer", "minimum": 0, "maximum": 256 },
+        "high": { "type": "integer", "minimum": 0, "maximum": 256 },
+        "medium": { "type": "integer", "minimum": 0, "maximum": 256 },
+        "low": { "type": "integer", "minimum": 0, "maximum": 256 },
+        "waitingForHuman": { "type": "integer", "minimum": 0, "maximum": 256 }
+      }
+    },
+    "longestWaitingForHumanSeconds": { "type": "integer", "minimum": 0 },
+    "topEventIds": {
+      "type": "array",
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1, "maxLength": 384 }
+    },
+    "events": {
+      "type": "array",
+      "maxItems": 256,
+      "items": { "$ref": "attention-event.schema.json" }
+    },
+    "truncated": { "type": "boolean" },
+    "totalCandidates": { "type": "integer", "minimum": 0 },
+    "generatedAtUtc": { "type": "string", "format": "date-time" }
+  }
+}

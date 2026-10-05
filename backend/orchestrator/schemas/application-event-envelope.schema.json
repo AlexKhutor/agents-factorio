@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/application-event-envelope.v1.json",
+  "title": "Application event envelope v0.2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "contractVersion", "eventId", "eventClass", "eventType",
+    "correlationId", "resource", "occurredAtUtc", "observedAtUtc",
+    "authority", "dataSchema", "dataSha256", "publication"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.2.0" },
+    "eventId": {
+      "type": "string",
+      "pattern": "^application-event-[a-f0-9]{64}$"
+    },
+    "eventClass": {
+      "enum": [
+        "factual-change", "heartbeat-freshness", "interaction-request",
+        "provider-stream-item", "command-outcome", "service-health"
+      ]
+    },
+    "eventType": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 128,
+      "pattern": "^[a-z][a-z0-9]*(?:\\.[a-z][a-z0-9-]*){1,5}$"
+    },
+    "correlationId": { "$ref": "application-common.v1.json#/$defs/envelopeId" },
+    "causationId": {
+      "type": "string",
+      "pattern": "^(?:application|causal)-event-[a-f0-9]{64}$"
+    },
+    "resource": { "$ref": "application-resource-ref.v1.json" },
+    "occurredAtUtc": { "$ref": "application-common.v1.json#/$defs/utc" },
+    "observedAtUtc": { "$ref": "application-common.v1.json#/$defs/utc" },
+    "authority": {
+      "$ref": "https://isolate-vscode.local/schemas/authority-reference.v1.json"
+    },
+    "dataSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaId", "contractVersion"],
+      "properties": {
+        "schemaId": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "contractVersion": {
+          "type": "string",
+          "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "maxLength": 32
+        }
+      }
+    },
+    "dataSha256": { "$ref": "application-common.v1.json#/$defs/sha256" },
+    "publication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "publicationId", "streamId", "epoch", "sequence", "cursor",
+        "publishedAtUtc", "publisher"
+      ],
+      "properties": {
+        "publicationId": {
+          "type": "string",
+          "pattern": "^application-publication-[a-f0-9]{64}$"
+        },
+        "streamId": { "$ref": "application-common.v1.json#/$defs/envelopeId" },
+        "epoch": { "$ref": "application-common.v1.json#/$defs/envelopeId" },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "cursor": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "pattern": "^[^\\u0000-\\u001f\\u007f]+$"
+        },
+        "publishedAtUtc": { "$ref": "application-common.v1.json#/$defs/utc" },
+        "publisher": {
+          "$ref": "https://isolate-vscode.local/schemas/authority-reference.v1.json"
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "eventClass": { "const": "factual-change" } }, "required": ["eventClass"] },
+      "then": { "properties": { "eventType": { "type": "string", "pattern": "^fact\\." } } }
+    },
+    {
+      "if": { "properties": { "eventClass": { "const": "heartbeat-freshness" } }, "required": ["eventClass"] },
+      "then": { "properties": { "eventType": { "type": "string", "pattern": "^freshness\\." } } }
+    },
+    {
+      "if": { "properties": { "eventClass": { "const": "interaction-request" } }, "required": ["eventClass"] },
+      "then": { "properties": { "eventType": { "type": "string", "pattern": "^interaction\\." } } }
+    },
+    {
+      "if": { "properties": { "eventClass": { "const": "provider-stream-item" } }, "required": ["eventClass"] },
+      "then": { "properties": { "eventType": { "type": "string", "pattern": "^provider\\." } } }
+    },
+    {
+      "if": { "properties": { "eventClass": { "const": "command-outcome" } }, "required": ["eventClass"] },
+      "then": { "properties": { "eventType": { "type": "string", "pattern": "^command\\." } } }
+    },
+    {
+      "if": { "properties": { "eventClass": { "const": "service-health" } }, "required": ["eventClass"] },
+      "then": { "properties": { "eventType": { "type": "string", "pattern": "^service\\." } } }
+    }
+  ]
+}

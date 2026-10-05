@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/adapter-selection.v1.json",
+  "title": "Adapter registry selection snapshot v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "contractVersion", "descriptorKey", "identity", "authority",
+    "capabilitiesObservedAtUtc", "capabilitiesValidForSeconds",
+    "requiredCapabilities", "capabilitySnapshot", "matchedCapabilities"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "descriptorKey": { "type": "string", "pattern": "^adapter-[a-f0-9]{64}$" },
+    "identity": { "$ref": "adapter-common.schema.json#/$defs/identity" },
+    "authority": { "$ref": "authority-reference.schema.json" },
+    "capabilitiesObservedAtUtc": { "$ref": "adapter-common.schema.json#/$defs/utc" },
+    "capabilitiesValidForSeconds": { "type": "integer", "minimum": 1, "maximum": 86400 },
+    "requiredCapabilities": {
+      "type": "array", "minItems": 1, "maxItems": 16, "uniqueItems": true,
+      "items": { "$ref": "adapter-common.schema.json#/$defs/requirement" }
+    },
+    "capabilitySnapshot": {
+      "type": "array", "minItems": 1, "maxItems": 15, "uniqueItems": true,
+      "items": { "$ref": "adapter-descriptor.schema.json#/$defs/capability" }
+    },
+    "matchedCapabilities": {
+      "type": "array", "minItems": 1, "maxItems": 15, "uniqueItems": true,
+      "items": { "$ref": "adapter-descriptor.schema.json#/$defs/capability" }
+    }
+  }
+}

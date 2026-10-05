@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/child-agent-statistics.v1.json",
+  "title": "Managed child Codex task statistics record v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "sourceId", "taskId", "threadId", "turnId", "updatedAtUtc", "statistics"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "sourceId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,95}$" },
+    "taskId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,95}$" },
+    "threadId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"
+    },
+    "turnId": { "type": ["string", "null"], "maxLength": 256 },
+    "updatedAtUtc": { "type": "string", "format": "date-time" },
+    "statistics": { "$ref": "agent-statistics.schema.json" }
+  }
+}

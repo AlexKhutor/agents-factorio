@@ -1,0 +1,211 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/application-agent-artifacts.v1.json",
+  "title": "Agent registered artifact references v0.1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "contractVersion",
+    "operationId",
+    "input"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "contractVersion": {
+      "const": "v0.1.0"
+    },
+    "operationId": {
+      "enum": [
+        "query.agent-artifacts.list",
+        "query.agent-artifacts.read"
+      ]
+    },
+    "input": {
+      "type": "object"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "operationId": {
+            "const": "query.agent-artifacts.list"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "input": {
+            "$ref": "#/$defs/listInput"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "input": {
+            "$ref": "#/$defs/readInput"
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$",
+      "maxLength": 160
+    },
+    "listInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "agentId"
+      ],
+      "properties": {
+        "agentId": {
+          "$ref": "#/$defs/id"
+        }
+      }
+    },
+    "readInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "agentId",
+        "artifactId"
+      ],
+      "properties": {
+        "agentId": {
+          "$ref": "#/$defs/id"
+        },
+        "artifactId": {
+          "$ref": "#/$defs/id"
+        },
+        "cursor": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "maximumBytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65536
+        }
+      }
+    },
+    "record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifactId",
+        "path",
+        "sha256",
+        "sizeBytes",
+        "registeredAtUtc"
+      ],
+      "properties": {
+        "artifactId": {
+          "$ref": "#/$defs/id"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1048576
+        },
+        "registeredAtUtc": {
+          "type": "string",
+          "format": "date-time",
+          "maxLength": 32
+        }
+      }
+    },
+    "catalog": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "contractVersion",
+        "agentId",
+        "revision",
+        "coverage",
+        "records",
+        "truncated"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "contractVersion": {
+          "const": "v0.1.0"
+        },
+        "agentId": {
+          "$ref": "#/$defs/id"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "coverage": {
+          "const": "registered-only"
+        },
+        "truncated": {
+          "const": false
+        },
+        "records": {
+          "type": "array",
+          "maxItems": 128,
+          "items": {
+            "$ref": "#/$defs/record"
+          }
+        }
+      }
+    },
+    "page": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "contractVersion",
+        "agentId",
+        "artifactId",
+        "coverage",
+        "page"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "contractVersion": {
+          "const": "v0.1.0"
+        },
+        "agentId": {
+          "$ref": "#/$defs/id"
+        },
+        "artifactId": {
+          "$ref": "#/$defs/id"
+        },
+        "coverage": {
+          "const": "registered-reference"
+        },
+        "page": {
+          "$ref": "https://isolate-vscode.local/schemas/application-project-workspace.v1.json#/$defs/page"
+        }
+      }
+    }
+  }
+}

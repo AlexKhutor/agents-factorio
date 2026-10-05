@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/semantic-coordination-binding.v1.json",
+  "title": "Local semantic coordination binding v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "contractVersion", "bindingId", "authority", "state", "basis",
+    "externalWorkItemRef", "previousWorkstreamRef", "currentWorkstreamRef",
+    "target", "collisionCandidates", "observedAtUtc", "sourceUpdatedAtUtc", "evidenceRefs"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "bindingId": { "type": "string", "minLength": 1, "maxLength": 160 },
+    "authority": { "$ref": "authority-reference.schema.json" },
+    "state": { "enum": ["bound", "unbound", "collision", "deleted", "renamed", "moved"] },
+    "basis": { "enum": ["none", "user-confirmed", "deterministic-existing-evidence"] },
+    "externalWorkItemRef": { "$ref": "#/$defs/semanticWorkItemRef" },
+    "previousWorkstreamRef": { "$ref": "#/$defs/nullableWorkstreamRef" },
+    "currentWorkstreamRef": { "$ref": "#/$defs/nullableWorkstreamRef" },
+    "target": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/target" }] },
+    "collisionCandidates": {
+      "type": "array", "maxItems": 8, "uniqueItems": true,
+      "items": { "$ref": "#/$defs/target" }
+    },
+    "observedAtUtc": { "$ref": "#/$defs/utc" },
+    "sourceUpdatedAtUtc": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/utc" }] },
+    "evidenceRefs": {
+      "type": "array", "maxItems": 32, "uniqueItems": true,
+      "items": { "$ref": "external-reference.schema.json" }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "state": { "const": "unbound" } }, "required": ["state"] },
+      "then": {
+        "properties": {
+          "basis": { "const": "none" }, "target": { "type": "null" },
+          "collisionCandidates": { "type": "array", "maxItems": 0 }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "state": { "const": "collision" } }, "required": ["state"] },
+      "then": {
+        "properties": {
+          "basis": { "const": "none" }, "target": { "type": "null" },
+          "collisionCandidates": { "type": "array", "minItems": 2 },
+          "evidenceRefs": { "type": "array", "minItems": 2 }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "state": { "enum": ["bound", "deleted", "renamed", "moved"] } },
+        "required": ["state"]
+      },
+      "then": {
+        "properties": {
+          "basis": { "enum": ["user-confirmed", "deterministic-existing-evidence"] },
+          "target": { "$ref": "#/$defs/target" },
+          "collisionCandidates": { "type": "array", "maxItems": 0 },
+          "evidenceRefs": { "type": "array", "minItems": 1 }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "state": { "const": "deleted" } }, "required": ["state"] },
+      "then": {
+        "properties": {
+          "previousWorkstreamRef": { "$ref": "#/$defs/semanticWorkstreamRef" },
+          "currentWorkstreamRef": { "type": "null" }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "state": { "enum": ["renamed", "moved"] } }, "required": ["state"] },
+      "then": {
+        "properties": {
+          "previousWorkstreamRef": { "$ref": "#/$defs/semanticWorkstreamRef" },
+          "currentWorkstreamRef": { "$ref": "#/$defs/semanticWorkstreamRef" }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "utc": { "type": "string", "format": "date-time", "pattern": "Z$", "maxLength": 64 },
+    "semanticWorkItemRef": {
+      "allOf": [
+        { "$ref": "#/$defs/semanticRefBase" },
+        { "type": "object", "properties": { "kind": { "const": "semantic-work-item" } } }
+      ]
+    },
+    "semanticWorkstreamRef": {
+      "allOf": [
+        { "$ref": "#/$defs/semanticRefBase" },
+        { "type": "object", "properties": { "kind": { "const": "semantic-workstream" } } }
+      ]
+    },
+    "semanticRefBase": {
+      "allOf": [
+        { "$ref": "external-reference.schema.json" },
+        {
+          "type": "object",
+          "properties": {
+            "authority": {
+              "type": "object",
+              "properties": {
+                "authorityType": { "const": "external-semantic-source" }
+              },
+              "required": ["authorityType"]
+            }
+          },
+          "required": ["authority"]
+        }
+      ]
+    },
+    "nullableWorkstreamRef": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/semanticWorkstreamRef" }]
+    },
+    "workItemRef": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sourceId", "workItemId"],
+      "properties": {
+        "sourceId": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "workItemId": { "type": "string", "minLength": 1, "maxLength": 160 }
+      }
+    },
+    "executionRef": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sourceId", "taskId", "executionId"],
+      "properties": {
+        "sourceId": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "taskId": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "executionId": { "type": "string", "minLength": 1, "maxLength": 160 }
+      }
+    },
+    "executionBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["executionRef", "providerExecutionRef"],
+      "properties": {
+        "executionRef": { "$ref": "#/$defs/executionRef" },
+        "providerExecutionRef": { "$ref": "#/$defs/nullableProviderExecutionRef" }
+      }
+    },
+    "providerExecutionRef": {
+      "allOf": [
+        { "$ref": "external-reference.schema.json" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "enum": ["provider-turn", "provider-subagent"] },
+            "authority": {
+              "type": "object",
+              "properties": { "authorityType": { "const": "provider" } },
+              "required": ["authorityType"]
+            }
+          },
+          "required": ["kind", "authority"]
+        }
+      ]
+    },
+    "nullableProviderExecutionRef": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/providerExecutionRef" }]
+    },
+    "target": {
+      "type": "object", "additionalProperties": false,
+      "required": ["workItemRef", "executionBindings"],
+      "properties": {
+        "workItemRef": { "$ref": "#/$defs/workItemRef" },
+        "executionBindings": {
+          "type": "array", "maxItems": 64, "uniqueItems": true,
+          "items": { "$ref": "#/$defs/executionBinding" }
+        }
+      }
+    }
+  }
+}

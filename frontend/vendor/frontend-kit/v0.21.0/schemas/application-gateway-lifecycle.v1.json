@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/application-gateway-lifecycle.v1.json",
+  "title": "Application gateway lifecycle status v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "contractVersion", "identity", "lifecycle", "health",
+    "ready", "startedAtUtc", "updatedAtUtc", "heartbeatAtUtc", "readyAtUtc",
+    "stop", "failure", "terminal"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "instanceId", "generation", "restartOf", "transportId", "workspace",
+        "process", "identitySha256"
+      ],
+      "properties": {
+        "instanceId": { "type": "string", "format": "uuid" },
+        "generation": { "type": "integer", "minimum": 1 },
+        "restartOf": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "format": "uuid" }
+          ]
+        },
+        "transportId": { "const": "loopback-http-json-ndjson-v1" },
+        "workspace": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["projectId", "sourceId", "workspaceRootSha256"],
+          "properties": {
+            "projectId": {
+              "type": "string", "minLength": 1, "maxLength": 160,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+            },
+            "sourceId": {
+              "type": "string", "minLength": 1, "maxLength": 160,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+            },
+            "workspaceRootSha256": {
+              "type": "string", "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        },
+        "process": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["processId", "startedAtUtc", "executableSha256"],
+          "properties": {
+            "processId": { "type": "integer", "minimum": 1 },
+            "startedAtUtc": { "type": "string", "format": "date-time" },
+            "executableSha256": {
+              "type": "string", "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        },
+        "identitySha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    },
+    "lifecycle": { "$ref": "#/$defs/lifecycle" },
+    "health": { "$ref": "#/$defs/lifecycle" },
+    "ready": { "type": "boolean" },
+    "startedAtUtc": { "type": "string", "format": "date-time" },
+    "updatedAtUtc": { "type": "string", "format": "date-time" },
+    "heartbeatAtUtc": { "type": "string", "format": "date-time" },
+    "readyAtUtc": { "$ref": "#/$defs/nullableTimestamp" },
+    "stop": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requestId", "requestedAtUtc", "confirmedAtUtc"],
+      "properties": {
+        "requestId": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "string", "minLength": 1, "maxLength": 160,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+            }
+          ]
+        },
+        "requestedAtUtc": { "$ref": "#/$defs/nullableTimestamp" },
+        "confirmedAtUtc": { "$ref": "#/$defs/nullableTimestamp" }
+      }
+    },
+    "failure": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["reasonCode", "failedAtUtc"],
+          "properties": {
+            "reasonCode": {
+              "type": "string", "minLength": 1, "maxLength": 96,
+              "pattern": "^[a-z][a-z0-9_]*$"
+            },
+            "failedAtUtc": { "type": "string", "format": "date-time" }
+          }
+        }
+      ]
+    },
+    "terminal": { "type": "boolean" }
+  },
+  "$defs": {
+    "lifecycle": {
+      "enum": ["starting", "ready", "stop-requested", "stopped", "failed", "uncertain"]
+    },
+    "nullableTimestamp": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "string", "format": "date-time" }
+      ]
+    }
+  }
+}

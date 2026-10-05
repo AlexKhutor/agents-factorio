@@ -1,0 +1,17 @@
+# Machine-local state of this controller instance. Never commit it:
+# .project-local holds the Gateway's connection token, the memory and queue
+# databases, agent sessions and the Claude provider config.
+.project-local/
+.project-runtime/
+logs/*
+!logs/.gitkeep
+
+# Task drafts are mutable; dispatched packets under coordination/tasks are kept.
+coordination/drafts/*
+!coordination/drafts/.gitkeep
+
+__pycache__/
+*.pyc
+node_modules/
+.DS_Store
+Thumbs.db

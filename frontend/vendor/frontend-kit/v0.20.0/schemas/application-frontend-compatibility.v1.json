@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/application-frontend-compatibility.v1.json",
+  "title": "Application Frontend Compatibility v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "contractVersion", "policyId", "packageName",
+    "currentSdkVersion", "pairs", "deprecations"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "policyId": { "$ref": "#/$defs/id" },
+    "packageName": { "type": "string", "pattern": "^@[a-z0-9-]+/[a-z0-9-]+$", "maxLength": 128 },
+    "currentSdkVersion": { "$ref": "#/$defs/version" },
+    "pairs": {
+      "type": "array", "minItems": 1, "maxItems": 32,
+      "items": { "$ref": "#/$defs/pair" }
+    },
+    "deprecations": {
+      "type": "array", "maxItems": 32,
+      "items": { "$ref": "#/$defs/deprecation" }
+    }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]{1,95}$" },
+    "version": { "type": "string", "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "utc": { "type": "string", "format": "date-time", "pattern": "Z$", "maxLength": 64 },
+    "pair": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "sdkVersion", "applicationContractVersion", "capabilityContractVersion",
+        "gatewayDescriptorVersion", "eventContractVersion", "status", "supportedUntilUtc"
+      ],
+      "properties": {
+        "sdkVersion": { "$ref": "#/$defs/version" },
+        "applicationContractVersion": { "$ref": "#/$defs/version" },
+        "capabilityContractVersion": { "$ref": "#/$defs/version" },
+        "gatewayDescriptorVersion": { "$ref": "#/$defs/version" },
+        "eventContractVersion": { "$ref": "#/$defs/version" },
+        "status": { "enum": ["current", "supported", "deprecated"] },
+        "supportedUntilUtc": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/utc" }] }
+      },
+      "allOf": [{
+        "if": { "properties": { "status": { "const": "deprecated" } }, "required": ["status"] },
+        "then": { "properties": { "supportedUntilUtc": { "$ref": "#/$defs/utc" } } },
+        "else": { "properties": { "supportedUntilUtc": { "type": "null" } } }
+      }]
+    },
+    "deprecation": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "noticeId", "sdkVersion", "applicationContractVersion", "announcedAtUtc",
+        "supportedUntilUtc", "replacementSdkVersion", "ownerId"
+      ],
+      "properties": {
+        "noticeId": { "$ref": "#/$defs/id" },
+        "sdkVersion": { "$ref": "#/$defs/version" },
+        "applicationContractVersion": { "$ref": "#/$defs/version" },
+        "announcedAtUtc": { "$ref": "#/$defs/utc" },
+        "supportedUntilUtc": { "$ref": "#/$defs/utc" },
+        "replacementSdkVersion": { "$ref": "#/$defs/version" },
+        "ownerId": { "$ref": "#/$defs/id" }
+      }
+    }
+  }
+}

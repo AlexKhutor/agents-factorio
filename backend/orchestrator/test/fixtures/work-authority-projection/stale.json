@@ -1,0 +1,53 @@
+{
+  "input": {
+    "fieldId": "child.progress.phase",
+    "expectedAuthority": {
+      "schemaVersion": 1,
+      "authorityType": "child-workspace",
+      "sourceId": "worker-progress",
+      "externalId": "task-m1-5",
+      "contractVersion": "v0.3.0"
+    },
+    "observations": [
+      {
+        "observationId": "child-progress-stale-1",
+        "authority": {
+          "schemaVersion": 1,
+          "authorityType": "child-workspace",
+          "sourceId": "worker-progress",
+          "externalId": "task-m1-5",
+          "contractVersion": "v0.3.0"
+        },
+        "value": {
+          "phase": "implementation"
+        },
+        "occurredAtUtc": "2026-08-30T09:56:50.000Z",
+        "observedAtUtc": "2026-08-30T09:57:00.000Z",
+        "publishedAtUtc": "2026-08-30T09:57:05.000Z",
+        "heartbeatAtUtc": "2026-08-30T09:57:00.000Z",
+        "evidenceRefs": [
+          {
+            "schemaVersion": 1,
+            "kind": "artifact",
+            "relationship": "supports",
+            "authority": {
+              "schemaVersion": 1,
+              "authorityType": "child-workspace",
+              "sourceId": "worker-progress",
+              "externalId": "task-m1-5",
+              "contractVersion": "v0.3.0"
+            },
+            "locator": ".orchestrator/progress/task-m1-5.json",
+            "label": "Worker progress receipt"
+          }
+        ]
+      }
+    ],
+    "availability": "available",
+    "reconciledAtUtc": "2026-08-30T10:00:00.000Z",
+    "staleAfterSeconds": 60,
+    "freshnessTimestampField": "observedAtUtc",
+    "futureSkewSeconds": 5
+  },
+  "expectedStatus": "stale"
+}

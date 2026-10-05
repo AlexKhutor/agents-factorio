@@ -1,0 +1,250 @@
+{
+  "schemaVersion": 1,
+  "fixtureVersion": "v0.3.0",
+  "descriptor": {
+    "schemaVersion": 1,
+    "contractVersion": "v0.3.0",
+    "identity": {
+      "adapterId": "fake-semantic-source",
+      "adapterFamily": "semantic-work-source",
+      "adapterVersion": "v0.3.0",
+      "sourceId": "fake-semantic-source",
+      "runtimeInstanceId": "semantic-fixture-runtime"
+    },
+    "authority": {
+      "schemaVersion": 1,
+      "authorityType": "external-semantic-source",
+      "sourceId": "fake-semantic-source",
+      "externalId": "semantic-fixture-runtime",
+      "contractVersion": "v0.3.0"
+    },
+    "capabilities": [
+      {
+        "operation": "discoverCapabilities",
+        "support": "native",
+        "contractVersions": ["v0.3.0"],
+        "guarantees": ["exact-native-identity"],
+        "visibility": "headless",
+        "interruptBehavior": "not-applicable",
+        "recovery": ["none"],
+        "limits": {},
+        "extensions": []
+      },
+      {
+        "operation": "listWorkstreams",
+        "support": "native",
+        "contractVersions": ["v0.3.0"],
+        "guarantees": ["exact-native-identity"],
+        "visibility": "provider-observed",
+        "interruptBehavior": "not-applicable",
+        "recovery": ["reconnect"],
+        "limits": { "maximumItems": 20 },
+        "extensions": [
+          { "extensionId": "fake.semantic.board-columns", "contractVersion": "v0.3.0" }
+        ]
+      },
+      {
+        "operation": "readWorkstream",
+        "support": "native",
+        "contractVersions": ["v0.3.0"],
+        "guarantees": ["exact-native-identity"],
+        "visibility": "provider-observed",
+        "interruptBehavior": "not-applicable",
+        "recovery": ["reconnect"],
+        "limits": {},
+        "extensions": []
+      },
+      {
+        "operation": "listWorkItems",
+        "support": "native",
+        "contractVersions": ["v0.3.0"],
+        "guarantees": ["exact-native-identity"],
+        "visibility": "provider-observed",
+        "interruptBehavior": "not-applicable",
+        "recovery": ["reconnect"],
+        "limits": { "maximumItems": 50 },
+        "extensions": []
+      },
+      {
+        "operation": "readProvenance",
+        "support": "experimental",
+        "contractVersions": ["v0.3.0"],
+        "guarantees": ["exact-native-identity"],
+        "visibility": "provider-observed",
+        "interruptBehavior": "not-applicable",
+        "recovery": ["reconnect"],
+        "limits": {},
+        "extensions": []
+      }
+    ],
+    "capabilitiesObservedAtUtc": "2026-08-30T12:00:00.000Z",
+    "capabilitiesValidForSeconds": 3600,
+    "extensions": [
+      { "extensionId": "fake.semantic.board-columns", "contractVersion": "v0.3.0" }
+    ]
+  },
+  "results": [
+    {
+      "schemaVersion": 1,
+      "contractVersion": "v0.3.0",
+      "adapter": {
+        "adapterId": "fake-semantic-source",
+        "adapterFamily": "semantic-work-source",
+        "adapterVersion": "v0.3.0",
+        "sourceId": "fake-semantic-source",
+        "runtimeInstanceId": "semantic-fixture-runtime"
+      },
+      "operation": {
+        "name": "listWorkstreams",
+        "operationId": "semantic-list-workstreams",
+        "correlationId": "semantic-fixture-correlation"
+      },
+      "observedAtUtc": "2026-08-30T12:00:01.000Z",
+      "authority": {
+        "schemaVersion": 1,
+        "authorityType": "external-semantic-source",
+        "sourceId": "fake-semantic-source",
+        "externalId": "semantic-workstream-1",
+        "contractVersion": "v0.3.0"
+      },
+      "freshness": { "status": "fresh", "ageSeconds": 0, "staleAfterSeconds": 60 },
+      "resultType": "success",
+      "outcome": "completed",
+      "lifecycle": {
+        "state": "none", "evidence": "none", "eventId": null,
+        "sequence": null, "cursor": null, "providerOccurredAtUtc": null
+      },
+      "retry": { "allowed": false, "reasonCode": "semantic_read_completed" },
+      "evidenceRefs": [
+        {
+          "schemaVersion": 1,
+          "kind": "semantic-workstream",
+          "relationship": "semantic-owner",
+          "authority": {
+            "schemaVersion": 1,
+            "authorityType": "external-semantic-source",
+            "sourceId": "fake-semantic-source",
+            "externalId": "semantic-workstream-1",
+            "contractVersion": "v0.3.0"
+          }
+        }
+      ],
+      "data": {
+        "records": [{
+          "ref": {
+            "schemaVersion": 1,
+            "kind": "semantic-workstream",
+            "relationship": "semantic-owner",
+            "authority": {
+              "schemaVersion": 1,
+              "authorityType": "external-semantic-source",
+              "sourceId": "fake-semantic-source",
+              "externalId": "semantic-workstream-1",
+              "contractVersion": "v0.3.0"
+            }
+          },
+          "name": "Static adapter fixture",
+          "linkRefs": []
+        }]
+      },
+      "error": null,
+      "extensions": [
+        {
+          "extensionId": "fake.semantic.board-columns",
+          "contractVersion": "v0.3.0",
+          "data": { "columns": ["planned", "active", "done"] }
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "contractVersion": "v0.3.0",
+      "adapter": {
+        "adapterId": "fake-semantic-source",
+        "adapterFamily": "semantic-work-source",
+        "adapterVersion": "v0.3.0",
+        "sourceId": "fake-semantic-source",
+        "runtimeInstanceId": "semantic-fixture-runtime"
+      },
+      "operation": {
+        "name": "readProvenance",
+        "operationId": "semantic-read-provenance",
+        "correlationId": "semantic-fixture-correlation"
+      },
+      "observedAtUtc": "2026-08-30T12:00:02.000Z",
+      "authority": {
+        "schemaVersion": 1,
+        "authorityType": "external-semantic-source",
+        "sourceId": "fake-semantic-source",
+        "externalId": "semantic-work-item-1",
+        "contractVersion": "v0.3.0"
+      },
+      "freshness": { "status": "fresh", "ageSeconds": 0, "staleAfterSeconds": 60 },
+      "resultType": "success",
+      "outcome": "completed",
+      "lifecycle": {
+        "state": "none", "evidence": "none", "eventId": null,
+        "sequence": null, "cursor": null, "providerOccurredAtUtc": null
+      },
+      "retry": { "allowed": false, "reasonCode": "semantic_read_completed" },
+      "evidenceRefs": [
+        {
+          "schemaVersion": 1,
+          "kind": "semantic-work-item",
+          "relationship": "semantic-owner",
+          "authority": {
+            "schemaVersion": 1,
+            "authorityType": "external-semantic-source",
+            "sourceId": "fake-semantic-source",
+            "externalId": "semantic-work-item-1",
+            "contractVersion": "v0.3.0"
+          }
+        }
+      ],
+      "data": {
+        "records": [{
+          "ref": {
+            "schemaVersion": 1,
+            "kind": "semantic-work-item",
+            "relationship": "semantic-owner",
+            "authority": {
+              "schemaVersion": 1,
+              "authorityType": "external-semantic-source",
+              "sourceId": "fake-semantic-source",
+              "externalId": "semantic-work-item-1",
+              "contractVersion": "v0.3.0"
+            }
+          },
+          "linkRefs": [
+            {
+              "schemaVersion": 1,
+              "kind": "artifact",
+              "relationship": "semantic-artifact",
+              "authority": {
+                "schemaVersion": 1,
+                "authorityType": "external-semantic-source",
+                "sourceId": "fake-semantic-source",
+                "externalId": "semantic-file-1",
+                "contractVersion": "v0.3.0"
+              }
+            },
+            {
+              "schemaVersion": 1,
+              "kind": "provider-turn",
+              "relationship": "linked-execution",
+              "authority": {
+                "schemaVersion": 1,
+                "authorityType": "provider",
+                "sourceId": "fake-execution-provider",
+                "externalId": "fake-turn-1",
+                "contractVersion": "v0.3.0"
+              }
+            }
+          ]
+        }]
+      },
+      "error": null,
+      "extensions": []
+    }
+  ]
+}

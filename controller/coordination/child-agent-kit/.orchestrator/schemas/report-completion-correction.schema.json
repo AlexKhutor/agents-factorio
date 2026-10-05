@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/report-completion-correction.v1.json",
+  "title": "Immutable Child Report Completion Correction v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "contractVersion",
+    "kind",
+    "correctionId",
+    "taskId",
+    "sourceId",
+    "sourceRevision",
+    "reasonCode",
+    "step",
+    "original",
+    "corrected",
+    "authorization",
+    "createdAtUtc"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "kind": { "const": "terminal-plan-step-state-correction" },
+    "correctionId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$" },
+    "taskId": { "$ref": "#/$defs/id" },
+    "sourceId": { "$ref": "#/$defs/id" },
+    "sourceRevision": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "reasonCode": { "const": "completed-plan-step-state-omission" },
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "fromState", "toState"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "fromState": { "const": "running" },
+        "toState": { "const": "completed" }
+      }
+    },
+    "original": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reportMetadataSha256", "reportSha256", "progressSha256", "executionSummarySha256"],
+      "properties": {
+        "reportMetadataSha256": { "$ref": "#/$defs/sha256" },
+        "reportSha256": { "$ref": "#/$defs/sha256" },
+        "progressSha256": { "$ref": "#/$defs/sha256" },
+        "executionSummarySha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "corrected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["progressFile", "progressSha256", "executionSummaryFile", "executionSummarySha256"],
+      "properties": {
+        "progressFile": { "const": "progress.json" },
+        "progressSha256": { "$ref": "#/$defs/sha256" },
+        "executionSummaryFile": { "const": "execution-summary.json" },
+        "executionSummarySha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "authorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["confirmedBy", "note"],
+      "properties": {
+        "confirmedBy": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "note": { "type": "string", "minLength": 1, "maxLength": 1024 }
+      }
+    },
+    "createdAtUtc": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,95}$" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

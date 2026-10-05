@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/orchestration-command.v1.json",
+  "title": "Orchestration Control Command v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "command", "requestedBy", "requestedAtUtc"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "command": {
+      "enum": [
+        "pause",
+        "drain",
+        "resume",
+        "cancel-task",
+        "cancel-agent",
+        "emergency-stop-all",
+        "mark-stop-unconfirmed",
+        "retry-item",
+        "stop-scheduler"
+      ]
+    },
+    "taskId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,95}$" },
+    "sourceId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,95}$" },
+    "agentId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,95}$" },
+    "itemId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._:-]{0,191}$" },
+    "reason": { "type": "string", "maxLength": 1024 },
+    "requestedBy": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "requestedAtUtc": { "type": "string", "format": "date-time" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "command": { "const": "cancel-task" } } },
+      "then": { "required": ["taskId"] }
+    },
+    {
+      "if": { "properties": { "command": { "const": "cancel-agent" } } },
+      "then": { "required": ["agentId"] }
+    },
+    {
+      "if": { "properties": { "command": { "const": "retry-item" } } },
+      "then": { "required": ["itemId"] }
+    }
+  ]
+}

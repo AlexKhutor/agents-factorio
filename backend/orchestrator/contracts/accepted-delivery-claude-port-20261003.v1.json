@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "releaseId": "claude-port-backend-20261003",
+  "owner": "orchestrator-development",
+  "frontend": {
+    "packageName": "@isolate-vscode/application-frontend-kit",
+    "version": "v0.21.0",
+    "manifestSha256": "d8915644f708ac4401cb8653b7424974f3e5aff94ea16812eb8f20d8dda883b7",
+    "sourceRoot": ".project-local/claude-port-kit-0210",
+    "controllerRoot": "coordination/frontend-kit/v0.21.0",
+    "contracts": {
+      "application": "v0.1.0",
+      "gatewayDescriptor": "v0.2.0",
+      "capabilities": "v0.2.0"
+    }
+  }
+}

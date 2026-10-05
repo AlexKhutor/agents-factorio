@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/project-descriptor.schema.json",
+  "title": "isolateVsCode orchestrator project descriptor",
+  "type": "object",
+  "required": ["formatVersion", "projectId", "displayName", "paths"],
+  "properties": {
+    "formatVersion": { "const": 1 },
+    "projectId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{1,63}$" },
+    "displayName": { "type": "string", "minLength": 1 },
+    "paths": {
+      "type": "object",
+      "required": ["projectRoot", "runtimeRoot", "contextRoot", "repositoryRoot", "sourceRoots"],
+      "properties": {
+        "projectRoot": { "$ref": "#/$defs/relativePath" },
+        "runtimeRoot": { "$ref": "#/$defs/relativePath" },
+        "contextRoot": { "$ref": "#/$defs/relativePath" },
+        "repositoryRoot": {
+          "oneOf": [{ "$ref": "#/$defs/relativePath" }, { "type": "null" }]
+        },
+        "sourceRoots": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["id", "role", "path"],
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "role": { "type": "string", "minLength": 1 },
+              "path": { "$ref": "#/$defs/relativePath" }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "features": {
+      "type": "object",
+      "properties": {
+        "gitWorktrees": { "type": "boolean" },
+        "vscodeWindows": { "type": "boolean" },
+        "spatialClient": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "integrations": {
+      "type": "object",
+      "properties": {
+        "vscode": { "type": "object" },
+        "spatial": { "type": "object" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "not": { "pattern": "^(?:[A-Za-z]:[\\/]|[\\/]{1,2})" }
+    }
+  }
+}

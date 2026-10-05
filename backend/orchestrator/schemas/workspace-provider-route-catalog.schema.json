@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/workspace-provider-route-catalog.schema.json",
+  "title": "Additional workspace provider route catalog",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "routes"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "routes": {
+      "type": "array",
+      "maxItems": 32,
+      "items": { "$ref": "#/$defs/route" }
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$"
+    },
+    "operation": {
+      "enum": [
+        "prepare", "open", "close", "listSessions", "bindSession", "listProfiles",
+        "submitTask", "observeStart", "stopExecution", "returnReport"
+      ]
+    },
+    "capability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operation", "support", "gate"],
+      "properties": {
+        "operation": { "$ref": "#/$defs/operation" },
+        "support": {
+          "enum": ["supported", "conditional", "foreign-owner-required", "unsupported"]
+        },
+        "gate": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/identifier" }] }
+      }
+    },
+    "route": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "routeId", "provider", "launchSurface", "executionAdapter",
+        "coordinationProfile", "executorState", "capabilities", "limitations"
+      ],
+      "properties": {
+        "routeId": { "$ref": "#/$defs/identifier" },
+        "provider": { "$ref": "#/$defs/identifier" },
+        "launchSurface": { "$ref": "#/$defs/identifier" },
+        "executionAdapter": { "$ref": "#/$defs/identifier" },
+        "coordinationProfile": { "const": "foreign-provider-handoff" },
+        "executorState": { "const": "foreign-owner-required" },
+        "capabilities": {
+          "type": "array", "minItems": 10, "maxItems": 10,
+          "items": { "$ref": "#/$defs/capability" }
+        },
+        "limitations": {
+          "type": "array", "maxItems": 32,
+          "items": { "$ref": "#/$defs/identifier" }
+        }
+      }
+    }
+  }
+}

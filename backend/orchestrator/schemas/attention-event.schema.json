@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/attention-event.v1.json",
+  "title": "Human Attention Event v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "eventId",
+    "type",
+    "sourceKind",
+    "taskKey",
+    "taskId",
+    "sourceId",
+    "title",
+    "attentionRequired",
+    "urgency",
+    "score",
+    "rank",
+    "reason",
+    "signals",
+    "impact",
+    "waitingForHuman",
+    "firstObservedAtUtc",
+    "lastObservedAtUtc",
+    "sourceUpdatedAtUtc",
+    "ageSeconds",
+    "agentIds",
+    "availableActions",
+    "evidence",
+    "sourceState",
+    "freshness"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "eventId": { "type": "string", "minLength": 1, "maxLength": 384 },
+    "type": {
+      "enum": [
+        "decision_required",
+        "stop_unconfirmed",
+        "recovery_required",
+        "dependency_blocked",
+        "failed",
+        "blocked",
+        "critical_stale",
+        "agent_idle"
+      ]
+    },
+    "sourceKind": { "enum": ["intervention", "task", "agent"] },
+    "taskKey": { "type": "string", "minLength": 3, "maxLength": 193 },
+    "taskId": { "$ref": "#/$defs/id" },
+    "sourceId": { "$ref": "#/$defs/id" },
+    "title": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "attentionRequired": { "const": true },
+    "urgency": { "enum": ["critical", "high", "medium", "low"] },
+    "score": { "type": "integer", "minimum": 0, "maximum": 2000 },
+    "rank": { "type": "integer", "minimum": 1, "maximum": 256 },
+    "reason": { "type": "string", "minLength": 1, "maxLength": 512 },
+    "signals": {
+      "type": "array",
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1, "maxLength": 256 }
+    },
+    "impact": { "$ref": "#/$defs/impact" },
+    "waitingForHuman": { "type": "boolean" },
+    "firstObservedAtUtc": { "type": "string", "format": "date-time" },
+    "lastObservedAtUtc": { "type": "string", "format": "date-time" },
+    "sourceUpdatedAtUtc": { "type": "string", "format": "date-time" },
+    "ageSeconds": { "type": "integer", "minimum": 0 },
+    "agentIds": {
+      "type": "array",
+      "maxItems": 64,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/id" }
+    },
+    "availableActions": {
+      "type": "array",
+      "maxItems": 6,
+      "uniqueItems": true,
+      "items": { "enum": ["open", "resume", "cancel", "retry", "interrupt"] }
+    },
+    "evidence": {
+      "type": "array",
+      "maxItems": 16,
+      "items": { "$ref": "task-progress.schema.json#/$defs/reference" }
+    },
+    "sourceState": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "freshness": { "enum": ["live", "delayed", "stale", "unknown"] }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,95}$"
+    },
+    "impact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "level",
+        "affectedTaskKeys",
+        "affectedTaskCount",
+        "activeAffectedTaskCount",
+        "affectedSourceIds",
+        "maximumDependencyDepth",
+        "dependencyAmbiguous",
+        "calculation"
+      ],
+      "properties": {
+        "level": { "enum": ["local", "multi_task", "cross_workstream"] },
+        "affectedTaskKeys": {
+          "type": "array",
+          "maxItems": 128,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 3, "maxLength": 193 }
+        },
+        "affectedTaskCount": { "type": "integer", "minimum": 0, "maximum": 128 },
+        "activeAffectedTaskCount": { "type": "integer", "minimum": 0, "maximum": 128 },
+        "affectedSourceIds": {
+          "type": "array",
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/id" }
+        },
+        "maximumDependencyDepth": { "type": "integer", "minimum": 0, "maximum": 128 },
+        "dependencyAmbiguous": { "type": "boolean" },
+        "calculation": { "const": "dependency-graph-v1" }
+      }
+    }
+  }
+}

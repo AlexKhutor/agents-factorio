@@ -1,0 +1,253 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/application-common.v1.json",
+  "title": "Application Contract v0.1 common definitions",
+  "$defs": {
+    "resourceKind": {
+      "enum": [
+        "work-projection", "backend-snapshot", "provider-thread",
+        "provider-turn", "provider-item", "artifact", "project-file",
+        "project-directory", "review-operation", "change-proposal",
+        "command", "interaction", "receipt", "event"
+      ]
+    },
+    "operationFamily": {
+      "enum": [
+        "discovery", "query", "subscription", "proposal", "approval",
+        "mutation", "receipt-lookup"
+      ]
+    },
+    "operationId": {
+      "type": "string",
+      "minLength": 5,
+      "maxLength": 128,
+      "pattern": "^[a-z][a-z0-9]*(?:\\.[a-z][a-z0-9-]*){2,5}$"
+    },
+    "envelopeId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$"
+    },
+    "utc": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$",
+      "maxLength": 64
+    },
+    "reasonCode": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{0,63}$"
+    },
+    "applicationErrorCode": {
+      "enum": [
+        "unsupported_capability", "source_unavailable", "stale_revision",
+        "conflict", "ambiguous", "access_denied", "writer_busy",
+        "uncertain_outcome", "continuation_required"
+      ]
+    },
+    "jsonValue": {
+      "anyOf": [
+        { "type": "null" },
+        { "type": "boolean" },
+        { "type": "number" },
+        { "type": "string", "maxLength": 1048576 },
+        {
+          "type": "array",
+          "maxItems": 1024,
+          "items": { "$ref": "#/$defs/jsonValue" }
+        },
+        {
+          "type": "object",
+          "maxProperties": 256,
+          "propertyNames": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "additionalProperties": { "$ref": "#/$defs/jsonValue" }
+        }
+      ]
+    },
+    "diagnostic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "severity", "message"],
+      "properties": {
+        "code": { "$ref": "#/$defs/reasonCode" },
+        "severity": { "enum": ["info", "warning", "error"] },
+        "message": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "field": { "type": "string", "minLength": 1, "maxLength": 128 }
+      }
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message", "retryable", "phase"],
+      "properties": {
+        "code": { "$ref": "#/$defs/applicationErrorCode" },
+        "message": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "retryable": { "type": "boolean" },
+        "phase": { "enum": ["precondition", "execution", "observation", "unknown"] },
+        "reasonCode": { "enum": ["workspace_not_bound", "workspace_binding_conflict", "workspace_path_missing"] }
+      },
+      "allOf": [
+        { "if": { "properties": { "reasonCode": true }, "required": ["reasonCode"] }, "then": { "properties": { "code": { "const": "source_unavailable" } } } },
+        { "if": { "properties": { "code": { "const": "unsupported_capability" } }, "required": ["code"] }, "then": { "properties": { "phase": { "const": "precondition" }, "retryable": { "const": false } } } },
+        { "if": { "properties": { "code": { "const": "source_unavailable" } }, "required": ["code"] }, "then": { "properties": { "phase": { "const": "precondition" }, "retryable": { "const": true } } } },
+        { "if": { "properties": { "code": { "const": "stale_revision" } }, "required": ["code"] }, "then": { "properties": { "phase": { "const": "precondition" }, "retryable": { "const": false } } } },
+        { "if": { "properties": { "code": { "enum": ["conflict", "ambiguous", "access_denied"] } }, "required": ["code"] }, "then": { "properties": { "phase": { "const": "precondition" }, "retryable": { "const": false } } } },
+        { "if": { "properties": { "code": { "const": "writer_busy" } }, "required": ["code"] }, "then": { "properties": { "phase": { "const": "precondition" }, "retryable": { "const": true } } } },
+        { "if": { "properties": { "code": { "enum": ["uncertain_outcome", "continuation_required"] } }, "required": ["code"] }, "then": { "properties": { "phase": { "const": "observation" }, "retryable": { "const": false } } } }
+      ]
+    },
+    "actorType": {
+      "enum": [
+        "local-operator", "controller", "child-agent", "provider",
+        "frontend-process"
+      ]
+    },
+    "actorRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion", "contractVersion", "actorType", "actorId", "authority"
+      ],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "contractVersion": { "const": "v0.1.0" },
+        "actorType": { "$ref": "#/$defs/actorType" },
+        "actorId": { "$ref": "#/$defs/envelopeId" },
+        "authority": {
+          "$ref": "https://isolate-vscode.local/schemas/authority-reference.v1.json"
+        }
+      },
+      "allOf": [
+        { "if": { "properties": { "actorType": { "const": "local-operator" } }, "required": ["actorType"] }, "then": { "properties": { "authority": { "type": "object", "properties": { "authorityType": { "const": "human" } }, "required": ["authorityType"] } } } },
+        { "if": { "properties": { "actorType": { "const": "controller" } }, "required": ["actorType"] }, "then": { "properties": { "authority": { "type": "object", "properties": { "authorityType": { "const": "coordination-core" } }, "required": ["authorityType"] } } } },
+        { "if": { "properties": { "actorType": { "const": "child-agent" } }, "required": ["actorType"] }, "then": { "properties": { "authority": { "type": "object", "properties": { "authorityType": { "const": "child-workspace" } }, "required": ["authorityType"] } } } },
+        { "if": { "properties": { "actorType": { "const": "provider" } }, "required": ["actorType"] }, "then": { "properties": { "authority": { "type": "object", "properties": { "authorityType": { "const": "provider" } }, "required": ["authorityType"] } } } },
+        { "if": { "properties": { "actorType": { "const": "frontend-process" } }, "required": ["actorType"] }, "then": { "properties": { "authority": { "type": "object", "properties": { "authorityType": { "const": "presentation" } }, "required": ["authorityType"] } } } }
+      ]
+    },
+    "authorizationRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion", "contractVersion", "authorizationId", "actor",
+        "issuedBy", "decision", "policyId", "policySha256", "scopeSha256",
+        "issuedAtUtc"
+      ],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "contractVersion": { "const": "v0.1.0" },
+        "authorizationId": { "$ref": "#/$defs/envelopeId" },
+        "actor": { "$ref": "#/$defs/actorRef" },
+        "issuedBy": {
+          "allOf": [
+            { "$ref": "https://isolate-vscode.local/schemas/authority-reference.v1.json" },
+            { "type": "object", "properties": { "authorityType": { "enum": ["human", "coordination-core", "provider", "child-workspace"] } }, "required": ["authorityType"] }
+          ]
+        },
+        "decision": { "enum": ["allow", "deny"] },
+        "policyId": { "$ref": "#/$defs/envelopeId" },
+        "policySha256": { "$ref": "#/$defs/sha256" },
+        "scopeSha256": { "$ref": "#/$defs/sha256" },
+        "issuedAtUtc": { "$ref": "#/$defs/utc" },
+        "expiresAtUtc": { "$ref": "#/$defs/utc" }
+      }
+    },
+    "sourceId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"
+    },
+    "nativeId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*\\\\)(?!.*://)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\u0000-\\u001f\\u007f]+$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "revision": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schemaVersion", "kind", "value"],
+          "properties": {
+            "schemaVersion": { "const": 1 },
+            "kind": { "const": "sequence" },
+            "value": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schemaVersion", "kind", "value"],
+          "properties": {
+            "schemaVersion": { "const": 1 },
+            "kind": { "const": "sha256" },
+            "value": { "$ref": "#/$defs/sha256" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schemaVersion", "kind", "value"],
+          "properties": {
+            "schemaVersion": { "const": 1 },
+            "kind": { "const": "git-commit" },
+            "value": { "type": "string", "pattern": "^(?:[a-f0-9]{40}|[a-f0-9]{64})$" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schemaVersion", "kind", "value"],
+          "properties": {
+            "schemaVersion": { "const": 1 },
+            "kind": { "enum": ["provider-version", "immutable-id", "opaque"] },
+            "value": { "type": "string", "minLength": 1, "maxLength": 256 }
+          }
+        }
+      ]
+    },
+    "resourceRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion", "contractVersion", "resourceKind", "sourceId",
+        "nativeId", "authority", "revision"
+      ],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "contractVersion": { "const": "v0.1.0" },
+        "resourceKind": { "$ref": "#/$defs/resourceKind" },
+        "sourceId": { "$ref": "#/$defs/sourceId" },
+        "nativeId": { "$ref": "#/$defs/nativeId" },
+        "authority": {
+          "$ref": "https://isolate-vscode.local/schemas/authority-reference.v1.json"
+        },
+        "revision": { "$ref": "#/$defs/revision" },
+        "contentSha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "operationRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "contractVersion", "family", "operationId"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "contractVersion": { "const": "v0.1.0" },
+        "family": { "$ref": "#/$defs/operationFamily" },
+        "operationId": { "$ref": "#/$defs/operationId" }
+      },
+      "allOf": [
+        { "if": { "properties": { "family": { "const": "discovery" } }, "required": ["family"] }, "then": { "properties": { "operationId": { "type": "string", "pattern": "^discovery\\." } } } },
+        { "if": { "properties": { "family": { "const": "query" } }, "required": ["family"] }, "then": { "properties": { "operationId": { "type": "string", "pattern": "^query\\." } } } },
+        { "if": { "properties": { "family": { "const": "subscription" } }, "required": ["family"] }, "then": { "properties": { "operationId": { "type": "string", "pattern": "^subscription\\." } } } },
+        { "if": { "properties": { "family": { "const": "proposal" } }, "required": ["family"] }, "then": { "properties": { "operationId": { "type": "string", "pattern": "^proposal\\." } } } },
+        { "if": { "properties": { "family": { "const": "approval" } }, "required": ["family"] }, "then": { "properties": { "operationId": { "type": "string", "pattern": "^approval\\." } } } },
+        { "if": { "properties": { "family": { "const": "mutation" } }, "required": ["family"] }, "then": { "properties": { "operationId": { "type": "string", "pattern": "^mutation\\." } } } },
+        { "if": { "properties": { "family": { "const": "receipt-lookup" } }, "required": ["family"] }, "then": { "properties": { "operationId": { "type": "string", "pattern": "^receipt\\." } } } }
+      ]
+    }
+  }
+}

@@ -1,0 +1,340 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/codex-app-server-shadow-store.schema.json",
+  "title": "Codex App Server Shadow Comparison Store",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "contractVersion", "projectId", "revision",
+    "updatedAtUtc", "retention", "records"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "projectId": { "$ref": "#/$defs/id" },
+    "revision": { "type": "integer", "minimum": 1 },
+    "updatedAtUtc": { "$ref": "#/$defs/utc" },
+    "retention": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["maxRecords", "maxAgeDays"],
+      "properties": {
+        "maxRecords": { "type": "integer", "minimum": 1, "maximum": 512 },
+        "maxAgeDays": { "type": "integer", "minimum": 1, "maximum": 3650 }
+      }
+    },
+    "records": {
+      "type": "array",
+      "maxItems": 512,
+      "items": { "$ref": "#/$defs/record" }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$"
+    },
+    "profileValue": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:+/-]{0,159}$"
+    },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "utc": { "type": "string", "format": "date-time", "pattern": "Z$", "maxLength": 32 },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "projectId", "sourceId", "runtimeInstanceId", "taskId",
+        "taskSha256", "threadId", "turnId"
+      ],
+      "properties": {
+        "projectId": { "$ref": "#/$defs/id" },
+        "sourceId": { "$ref": "#/$defs/id" },
+        "runtimeInstanceId": { "$ref": "#/$defs/id" },
+        "taskId": { "$ref": "#/$defs/id" },
+        "taskSha256": { "$ref": "#/$defs/sha256" },
+        "threadId": { "$ref": "#/$defs/id" },
+        "turnId": { "$ref": "#/$defs/id" }
+      }
+    },
+    "requestedProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "model", "reasoningEffort", "fallbackPolicy"],
+      "properties": {
+        "provider": { "const": "openai" },
+        "model": { "$ref": "#/$defs/profileValue" },
+        "reasoningEffort": { "$ref": "#/$defs/profileValue" },
+        "fallbackPolicy": { "const": "deny" }
+      }
+    },
+    "scalar": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["availability", "value"],
+      "properties": {
+        "availability": { "$ref": "#/$defs/availability" },
+        "value": { "oneOf": [{ "$ref": "#/$defs/profileValue" }, { "type": "null" }] }
+      },
+      "allOf": [{
+        "if": { "properties": { "availability": { "const": "available" } } },
+        "then": { "properties": { "value": { "$ref": "#/$defs/profileValue" } } },
+        "else": { "properties": { "value": { "type": "null" } } }
+      }]
+    },
+    "availability": {
+      "enum": ["available", "unsupported", "unavailable"]
+    },
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "inputTokens", "cachedInputTokens", "cacheWriteInputTokens",
+        "outputTokens", "reasoningOutputTokens", "totalTokens"
+      ],
+      "properties": {
+        "inputTokens": { "$ref": "#/$defs/count" },
+        "cachedInputTokens": { "$ref": "#/$defs/count" },
+        "cacheWriteInputTokens": { "$ref": "#/$defs/count" },
+        "outputTokens": { "$ref": "#/$defs/count" },
+        "reasoningOutputTokens": { "$ref": "#/$defs/count" },
+        "totalTokens": { "$ref": "#/$defs/count" }
+      }
+    },
+    "count": { "type": "integer", "minimum": 0 },
+    "usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["availability", "scope", "counts"],
+      "properties": {
+        "availability": { "$ref": "#/$defs/availability" },
+        "scope": {
+          "enum": ["turn", "thread", "task", "agent-task", "provider-thread", null]
+        },
+        "counts": { "oneOf": [{ "$ref": "#/$defs/counts" }, { "type": "null" }] }
+      },
+      "allOf": [{
+        "if": { "properties": { "availability": { "const": "available" } } },
+        "then": {
+          "properties": {
+            "scope": { "enum": ["turn", "thread", "task", "agent-task", "provider-thread"] },
+            "counts": { "$ref": "#/$defs/counts" }
+          }
+        },
+        "else": {
+          "properties": { "scope": { "type": "null" }, "counts": { "type": "null" } }
+        }
+      }]
+    },
+    "freshness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "ageSeconds", "staleAfterSeconds"],
+      "properties": {
+        "status": { "enum": ["fresh", "stale", "future"] },
+        "ageSeconds": { "type": "integer", "minimum": 0, "maximum": 86400000 },
+        "staleAfterSeconds": { "type": "integer", "minimum": 1, "maximum": 86400 }
+      }
+    },
+    "start": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["availability", "observed", "occurredAtUtc"],
+      "properties": {
+        "availability": { "$ref": "#/$defs/availability" },
+        "observed": { "type": ["boolean", "null"] },
+        "occurredAtUtc": { "oneOf": [{ "$ref": "#/$defs/utc" }, { "type": "null" }] }
+      },
+      "allOf": [{
+        "if": { "properties": { "availability": { "const": "available" } } },
+        "then": {
+          "properties": { "observed": { "type": "boolean" } },
+          "allOf": [{
+            "if": { "properties": { "observed": { "const": true } } },
+            "then": { "properties": { "occurredAtUtc": { "$ref": "#/$defs/utc" } } },
+            "else": { "properties": { "occurredAtUtc": { "type": "null" } } }
+          }]
+        },
+        "else": {
+          "properties": {
+            "observed": { "type": "null" }, "occurredAtUtc": { "type": "null" }
+          }
+        }
+      }]
+    },
+    "terminal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["availability", "state", "occurredAtUtc"],
+      "properties": {
+        "availability": { "$ref": "#/$defs/availability" },
+        "state": { "enum": ["completed", "interrupted", "failed", "cancelled", null] },
+        "occurredAtUtc": { "oneOf": [{ "$ref": "#/$defs/utc" }, { "type": "null" }] }
+      },
+      "allOf": [{
+        "if": { "properties": { "availability": { "const": "available" } } },
+        "then": {
+          "allOf": [{
+            "if": { "properties": { "state": { "type": "null" } } },
+            "then": { "properties": { "occurredAtUtc": { "type": "null" } } },
+            "else": { "properties": { "occurredAtUtc": { "$ref": "#/$defs/utc" } } }
+          }]
+        },
+        "else": {
+          "properties": { "state": { "type": "null" }, "occurredAtUtc": { "type": "null" } }
+        }
+      }]
+    },
+    "lifecycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["observedAtUtc", "continuity", "freshness", "start", "terminal"],
+      "properties": {
+        "observedAtUtc": { "$ref": "#/$defs/utc" },
+        "continuity": {
+          "enum": ["complete", "recovered", "reconnecting", "gap", "contradictory", "unknown"]
+        },
+        "freshness": { "$ref": "#/$defs/freshness" },
+        "start": { "$ref": "#/$defs/start" },
+        "terminal": { "$ref": "#/$defs/terminal" }
+      }
+    },
+    "observedProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model", "reasoningEffort"],
+      "properties": {
+        "model": { "$ref": "#/$defs/scalar" },
+        "reasoningEffort": { "$ref": "#/$defs/scalar" }
+      }
+    },
+    "subagents": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["availability", "count"],
+      "properties": {
+        "availability": { "$ref": "#/$defs/availability" },
+        "count": { "type": "integer", "minimum": 0, "maximum": 64 }
+      },
+      "allOf": [{
+        "if": { "properties": { "availability": { "const": "available" } } },
+        "else": { "properties": { "count": { "const": 0 } } }
+      }]
+    },
+    "comparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field", "classification", "reasonCode"],
+      "properties": {
+        "field": {
+          "enum": ["thread", "turn", "start", "terminal", "model", "reasoningEffort", "tokens", "subagents"]
+        },
+        "classification": { "$ref": "#/$defs/classification" },
+        "reasonCode": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$" }
+      }
+    },
+    "profilePair": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["managed", "appServer"],
+      "properties": {
+        "managed": { "$ref": "#/$defs/observedProfile" },
+        "appServer": { "$ref": "#/$defs/observedProfile" }
+      }
+    },
+    "usagePair": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["managed", "appServer"],
+      "properties": {
+        "managed": { "$ref": "#/$defs/usage" },
+        "appServer": { "$ref": "#/$defs/usage" }
+      }
+    },
+    "lifecyclePair": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["managed", "appServer"],
+      "properties": {
+        "managed": { "$ref": "#/$defs/lifecycle" },
+        "appServer": { "$ref": "#/$defs/lifecycle" }
+      }
+    },
+    "booleanPair": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["managed", "appServer"],
+      "properties": {
+        "managed": { "type": "boolean" },
+        "appServer": { "type": "boolean" }
+      }
+    },
+    "reconnectPair": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["managed", "appServer"],
+      "properties": {
+        "managed": { "enum": ["none", "reconnecting", "recovered"] },
+        "appServer": { "enum": ["none", "reconnecting", "recovered"] }
+      }
+    },
+    "subagentPair": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["managed", "appServer"],
+      "properties": {
+        "managed": { "$ref": "#/$defs/subagents" },
+        "appServer": { "$ref": "#/$defs/subagents" }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["observationOnly", "providerMutation", "providerHistoryWrite", "liveTaskChange"],
+      "properties": {
+        "observationOnly": { "const": true },
+        "providerMutation": { "const": false },
+        "providerHistoryWrite": { "const": false },
+        "liveTaskChange": { "const": false }
+      }
+    },
+    "record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion", "contractVersion", "comparatorVersion", "comparisonId",
+        "identity", "requestedProfile", "comparedAtUtc", "classification",
+        "reasonCodes", "profiles", "usage", "lifecycle", "gaps", "reconnect",
+        "subagents", "comparisons", "safety"
+      ],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "contractVersion": { "const": "v0.1.0" },
+        "comparatorVersion": { "const": "v0.1.0" },
+        "comparisonId": { "type": "string", "pattern": "^shadow-[a-f0-9]{64}$" },
+        "identity": { "$ref": "#/$defs/identity" },
+        "requestedProfile": { "$ref": "#/$defs/requestedProfile" },
+        "comparedAtUtc": { "$ref": "#/$defs/utc" },
+        "classification": { "$ref": "#/$defs/classification" },
+        "reasonCodes": {
+          "type": "array", "minItems": 1, "maxItems": 16, "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$" }
+        },
+        "profiles": { "$ref": "#/$defs/profilePair" },
+        "usage": { "$ref": "#/$defs/usagePair" },
+        "lifecycle": { "$ref": "#/$defs/lifecyclePair" },
+        "gaps": { "$ref": "#/$defs/booleanPair" },
+        "reconnect": { "$ref": "#/$defs/reconnectPair" },
+        "subagents": { "$ref": "#/$defs/subagentPair" },
+        "comparisons": {
+          "type": "array", "minItems": 8, "maxItems": 8,
+          "items": { "$ref": "#/$defs/comparison" }
+        },
+        "safety": { "$ref": "#/$defs/safety" }
+      }
+    },
+    "classification": {
+      "enum": ["match", "expected-capability-gap", "stale", "contradiction", "uncertain"]
+    }
+  }
+}

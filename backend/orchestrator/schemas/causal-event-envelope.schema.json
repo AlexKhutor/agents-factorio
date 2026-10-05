@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/causal-event-envelope.v1.json",
+  "title": "Work Orchestrator causal event envelope v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "contractVersion",
+    "eventId",
+    "eventType",
+    "sourceId",
+    "taskId",
+    "correlationId",
+    "occurredAtUtc",
+    "observedAtUtc",
+    "authority",
+    "dataSchema",
+    "dataSha256",
+    "artifactRefs"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "eventId": {
+      "type": "string",
+      "pattern": "^causal-event-[a-f0-9]{64}$"
+    },
+    "eventType": { "$ref": "#/$defs/identifier" },
+    "sourceId": { "$ref": "#/$defs/identifier" },
+    "taskId": { "$ref": "#/$defs/identifier" },
+    "correlationId": { "$ref": "#/$defs/identifier" },
+    "causationId": { "$ref": "#/$defs/eventReference" },
+    "parentEventId": { "$ref": "#/$defs/eventReference" },
+    "occurredAtUtc": { "$ref": "#/$defs/utc" },
+    "observedAtUtc": { "$ref": "#/$defs/utc" },
+    "authority": { "$ref": "authority-reference.schema.json" },
+    "dataSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaId", "contractVersion"],
+      "properties": {
+        "schemaId": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "contractVersion": {
+          "type": "string",
+          "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
+        }
+      }
+    },
+    "dataSha256": { "$ref": "#/$defs/sha256" },
+    "artifactRefs": {
+      "type": "array",
+      "maxItems": 32,
+      "items": {
+        "allOf": [
+          { "$ref": "external-reference.schema.json" },
+          {
+            "not": { "required": ["label"] },
+            "properties": {
+              "kind": { "const": "artifact" },
+              "locator": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 512,
+                "pattern": "^[A-Za-z0-9._-][A-Za-z0-9._/-]{0,511}$",
+                "not": { "pattern": "(?:^|/)\\.\\.(?:/|$)" }
+              },
+              "authority": {
+                "allOf": [
+                  { "$ref": "authority-reference.schema.json" },
+                  { "required": ["artifactSha256"] }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$"
+    },
+    "eventReference": {
+      "type": "string",
+      "pattern": "^causal-event-[a-f0-9]{64}$"
+    },
+    "utc": {
+      "type": "string",
+      "maxLength": 64,
+      "format": "date-time",
+      "pattern": "Z$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

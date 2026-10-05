@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/application-interaction-status.v0.1.0.json",
+  "title": "Application Interaction Status v0.1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "contractVersion", "requestId", "requestSha256",
+    "requestType", "mode", "state", "reasonCode", "responseRequired",
+    "responseAllowed", "allowedResponses", "requestSourceSequence",
+    "currentSourceSequence", "expiresAtUtc", "observedAtUtc",
+    "responseSha256", "statusSha256"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "requestId": { "$ref": "#/$defs/id" },
+    "requestSha256": { "$ref": "#/$defs/sha256" },
+    "requestType": {
+      "enum": [
+        "intent-clarification", "plan-confirmation", "option-selection",
+        "provider-tool-permission", "intervention", "report-decision",
+        "high-impact-action-approval", "recommendation", "notification"
+      ]
+    },
+    "mode": {
+      "enum": ["decision-required", "recommendation-available", "notification-only"]
+    },
+    "state": {
+      "enum": [
+        "awaiting-owner", "recommendation-available", "notified",
+        "resolved", "expired", "stale"
+      ]
+    },
+    "reasonCode": {
+      "enum": [
+        "owner_response_recorded", "source_sequence_changed", "request_expired",
+        "owner_decision_required", "owner_response_optional", "no_owner_response_expected"
+      ]
+    },
+    "responseRequired": { "type": "boolean" },
+    "responseAllowed": { "type": "boolean" },
+    "allowedResponses": {
+      "type": "array",
+      "maxItems": 16,
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,63}$" }
+    },
+    "requestSourceSequence": { "type": "integer", "minimum": 0 },
+    "currentSourceSequence": { "type": "integer", "minimum": 0 },
+    "expiresAtUtc": { "type": "string", "format": "date-time" },
+    "observedAtUtc": { "type": "string", "format": "date-time" },
+    "responseSha256": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/sha256" }]
+    },
+    "statusSha256": { "$ref": "#/$defs/sha256" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

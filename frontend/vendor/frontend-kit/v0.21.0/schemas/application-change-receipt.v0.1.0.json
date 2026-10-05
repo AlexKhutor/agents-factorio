@@ -1,0 +1,264 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/application-change-receipt.v0.1.0.json",
+  "title": "Application Change Receipt v0.1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "contractVersion",
+    "receiptId",
+    "operationKind",
+    "proposalRef",
+    "inverseRef",
+    "previewSha256",
+    "decisionSha256",
+    "writer",
+    "lease",
+    "outcome",
+    "resources",
+    "validation",
+    "publication",
+    "completedAtUtc",
+    "receiptSha256"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "receiptId": { "$ref": "#/$defs/id" },
+    "operationKind": { "enum": ["keep", "undo"] },
+    "proposalRef": { "$ref": "#/$defs/proposalRef" },
+    "inverseRef": {
+      "oneOf": [{ "$ref": "#/$defs/inverseRef" }, { "type": "null" }]
+    },
+    "previewSha256": { "$ref": "#/$defs/sha256" },
+    "decisionSha256": { "$ref": "#/$defs/sha256" },
+    "writer": { "$ref": "#/$defs/writer" },
+    "lease": { "$ref": "#/$defs/lease" },
+    "outcome": { "enum": ["applied", "not-applied", "uncertain"] },
+    "resources": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "items": { "$ref": "#/$defs/receiptResource" }
+    },
+    "validation": { "$ref": "#/$defs/validation" },
+    "publication": { "$ref": "#/$defs/publication" },
+    "completedAtUtc": { "type": "string", "format": "date-time" },
+    "receiptSha256": { "$ref": "#/$defs/sha256" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "operationKind": { "const": "keep" } } },
+      "then": { "properties": { "inverseRef": { "type": "null" } } }
+    },
+    {
+      "if": { "properties": { "operationKind": { "const": "undo" } } },
+      "then": { "properties": { "inverseRef": { "$ref": "#/$defs/inverseRef" } } }
+    },
+    {
+      "if": { "properties": { "outcome": { "const": "applied" } } },
+      "then": {
+        "properties": {
+          "writer": {
+            "type": "object",
+            "properties": { "evidenceSha256": { "$ref": "#/$defs/sha256" } }
+          },
+          "validation": {
+            "type": "object",
+            "properties": { "status": { "const": "passed" } }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "outcome": { "const": "not-applied" } } },
+      "then": {
+        "properties": {
+          "writer": {
+            "type": "object",
+            "properties": { "evidenceSha256": { "$ref": "#/$defs/sha256" } }
+          },
+          "validation": {
+            "type": "object",
+            "properties": { "status": { "const": "failed" } }
+          },
+          "publication": {
+            "type": "object",
+            "properties": { "status": { "const": "not-required" } }
+          },
+          "resources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "actualPreContentSha256": { "type": "null" },
+                "actualPostContentSha256": { "type": "null" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "outcome": { "const": "uncertain" } } },
+      "then": {
+        "properties": {
+          "validation": {
+            "type": "object",
+            "properties": { "status": { "const": "uncertain" } }
+          },
+          "publication": {
+            "type": "object",
+            "properties": { "status": { "enum": ["uncertain", "not-required"] } }
+          },
+          "resources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "actualPreContentSha256": { "type": "null" },
+                "actualPostContentSha256": { "type": "null" }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$"
+    },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "nullableSha256": {
+      "oneOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }]
+    },
+    "proposalRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["proposalId", "proposalRevision", "proposalSha256"],
+      "properties": {
+        "proposalId": { "$ref": "#/$defs/id" },
+        "proposalRevision": { "type": "integer", "minimum": 1 },
+        "proposalSha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "inverseRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["inverseId", "inverseSha256", "originalProposalSha256"],
+      "properties": {
+        "inverseId": { "$ref": "#/$defs/id" },
+        "inverseSha256": { "$ref": "#/$defs/sha256" },
+        "originalProposalSha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "writer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["writerId", "writerKind", "evidenceSha256"],
+      "properties": {
+        "writerId": { "$ref": "#/$defs/id" },
+        "writerKind": { "const": "bounded-owner-source-writer" },
+        "evidenceSha256": { "$ref": "#/$defs/nullableSha256" }
+      }
+    },
+    "lease": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["leaseId", "fencingRevision"],
+      "properties": {
+        "leaseId": { "$ref": "#/$defs/id" },
+        "fencingRevision": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "receiptResource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "changeId",
+        "sourceId",
+        "nativeId",
+        "expectedPreContentSha256",
+        "expectedPostContentSha256",
+        "actualPreContentSha256",
+        "actualPostContentSha256"
+      ],
+      "properties": {
+        "changeId": { "$ref": "#/$defs/id" },
+        "sourceId": {
+          "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/sourceId"
+        },
+        "nativeId": {
+          "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/nativeId"
+        },
+        "expectedPreContentSha256": { "$ref": "#/$defs/nullableSha256" },
+        "expectedPostContentSha256": { "$ref": "#/$defs/nullableSha256" },
+        "actualPreContentSha256": { "$ref": "#/$defs/nullableSha256" },
+        "actualPostContentSha256": { "$ref": "#/$defs/nullableSha256" }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "evidenceSha256", "validatedAtUtc"],
+      "properties": {
+        "status": { "enum": ["passed", "failed", "uncertain"] },
+        "evidenceSha256": { "$ref": "#/$defs/nullableSha256" },
+        "validatedAtUtc": { "type": "string", "format": "date-time" }
+      }
+    },
+    "publication": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "publicationId", "evidenceSha256", "observedAtUtc"],
+          "properties": {
+            "status": { "const": "published" },
+            "publicationId": { "$ref": "#/$defs/id" },
+            "evidenceSha256": { "$ref": "#/$defs/sha256" },
+            "observedAtUtc": { "type": "string", "format": "date-time" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "publicationId", "evidenceSha256", "observedAtUtc"],
+          "properties": {
+            "status": { "const": "failed" },
+            "publicationId": { "oneOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }] },
+            "evidenceSha256": { "$ref": "#/$defs/sha256" },
+            "observedAtUtc": { "type": "string", "format": "date-time" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "publicationId", "evidenceSha256", "observedAtUtc"],
+          "properties": {
+            "status": { "const": "uncertain" },
+            "publicationId": { "oneOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }] },
+            "evidenceSha256": { "$ref": "#/$defs/nullableSha256" },
+            "observedAtUtc": { "type": "string", "format": "date-time" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "publicationId", "evidenceSha256", "observedAtUtc"],
+          "properties": {
+            "status": { "const": "not-required" },
+            "publicationId": { "type": "null" },
+            "evidenceSha256": { "type": "null" },
+            "observedAtUtc": { "type": "string", "format": "date-time" }
+          }
+        }
+      ]
+    }
+  }
+}

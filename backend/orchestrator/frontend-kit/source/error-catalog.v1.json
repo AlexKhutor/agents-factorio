@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "catalogVersion": "v0.1.0",
+  "errors": [
+    {
+      "code": "unsupported_capability",
+      "phase": "precondition",
+      "retryable": false,
+      "meaning": "The active backend does not advertise this operation.",
+      "consumerAction": "Disable the action and refresh capability discovery only after backend identity changes."
+    },
+    {
+      "code": "source_unavailable",
+      "phase": "precondition",
+      "retryable": true,
+      "meaning": "The authoritative source cannot currently provide the requested evidence.",
+      "consumerAction": "Show unavailable state and allow an explicit bounded retry."
+    },
+    {
+      "code": "stale_revision",
+      "phase": "precondition",
+      "retryable": false,
+      "meaning": "The request was bound to an older resource or sequence.",
+      "consumerAction": "Refresh the resource and require a new user decision where authority is involved."
+    },
+    {
+      "code": "conflict",
+      "phase": "precondition",
+      "retryable": false,
+      "meaning": "Current authoritative state conflicts with the requested operation.",
+      "consumerAction": "Display the conflict and do not replay the request automatically."
+    },
+    {
+      "code": "ambiguous",
+      "phase": "precondition",
+      "retryable": false,
+      "meaning": "The backend cannot identify one exact target.",
+      "consumerAction": "Ask the user to select or clarify an exact target."
+    },
+    {
+      "code": "access_denied",
+      "phase": "precondition",
+      "retryable": false,
+      "meaning": "The actor or authorization does not permit the operation.",
+      "consumerAction": "Keep the action disabled and expose no hidden authority details."
+    },
+    {
+      "code": "writer_busy",
+      "phase": "precondition",
+      "retryable": true,
+      "meaning": "The exact bounded writer is currently occupied.",
+      "consumerAction": "Show busy state and permit only an explicit bounded retry."
+    },
+    {
+      "code": "uncertain_outcome",
+      "phase": "observation",
+      "retryable": false,
+      "meaning": "Execution may have changed state but confirmation is unavailable.",
+      "consumerAction": "Reconcile authoritative state; never replay the mutation automatically."
+    },
+    {
+      "code": "continuation_required",
+      "phase": "observation",
+      "retryable": false,
+      "meaning": "The workflow requires an explicit bound continuation decision.",
+      "consumerAction": "Present the required decision and preserve the current workflow identity."
+    }
+  ]
+}

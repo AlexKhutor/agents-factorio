@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/application-resource-read-result.v1.json",
+  "title": "Application Resource Read Result v0.3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "contractVersion", "operation", "resource", "relativePath",
+    "authority", "observedRevision", "requestSha256", "sourceBinding",
+    "contentSha256", "representationSha256", "mediaType", "encoding",
+    "range", "page", "truncated", "readAtUtc", "payload"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.3.0" },
+    "operation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "contractVersion", "family", "operationId"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "contractVersion": { "const": "v0.1.0" },
+        "family": { "const": "query" },
+        "operationId": {
+          "enum": ["query.artifact-resource.read", "query.project-resource.read"]
+        }
+      }
+    },
+    "resource": {
+      "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/resourceRef"
+    },
+    "relativePath": {
+      "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/nativeId"
+    },
+    "authority": {
+      "$ref": "https://isolate-vscode.local/schemas/authority-reference.v1.json"
+    },
+    "observedRevision": {
+      "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/revision"
+    },
+    "requestSha256": {
+      "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/sha256"
+    },
+    "sourceBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["rootId", "rootIdentitySha256", "readPolicyId", "readPolicySha256"],
+      "properties": {
+        "rootId": { "$ref": "#/$defs/id" },
+        "rootIdentitySha256": {
+          "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/sha256"
+        },
+        "readPolicyId": { "$ref": "#/$defs/id" },
+        "readPolicySha256": {
+          "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/sha256"
+        }
+      }
+    },
+    "contentSha256": {
+      "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/sha256"
+    },
+    "representationSha256": {
+      "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/sha256"
+    },
+    "mediaType": {
+      "enum": [
+        "text/plain", "text/markdown", "application/json",
+        "application/vnd.isolate-vscode.metadata+json",
+        "application/vnd.isolate-vscode.directory+json"
+      ]
+    },
+    "encoding": { "enum": ["none", "utf-8"] },
+    "range": {
+      "type": "object", "additionalProperties": false,
+      "required": ["offsetBytes", "returnedBytes", "totalBytes"],
+      "properties": {
+        "offsetBytes": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "returnedBytes": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "totalBytes": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+      }
+    },
+    "page": {
+      "type": "object", "additionalProperties": false,
+      "required": ["unit", "offset", "returned", "total"],
+      "properties": {
+        "unit": { "enum": ["bytes", "entries"] },
+        "offset": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "returned": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "total": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+      }
+    },
+    "truncated": { "type": "boolean" },
+    "readAtUtc": {
+      "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/utc"
+    },
+    "payload": {
+      "oneOf": [
+        { "$ref": "#/$defs/metadataPayload" },
+        { "$ref": "#/$defs/textPayload" },
+        { "$ref": "#/$defs/directoryPayload" }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "payload": { "type": "object", "properties": { "kind": { "const": "metadata" } }, "required": ["kind"] } },
+        "required": ["payload"]
+      },
+      "then": { "type": "object", "properties": { "encoding": { "const": "none" } } },
+      "else": { "type": "object", "properties": { "encoding": { "const": "utf-8" } } }
+    }
+  ],
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$" },
+    "metadataPayload": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind"],
+      "properties": { "kind": { "const": "metadata" } }
+    },
+    "textPayload": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "text"],
+      "properties": {
+        "kind": { "const": "text" },
+        "text": { "type": "string", "maxLength": 65536 }
+      }
+    },
+    "directoryEntry": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "kind", "sizeBytes", "contentSha256"],
+      "properties": {
+        "name": {
+          "type": "string", "minLength": 1, "maxLength": 256,
+          "pattern": "^(?!\\.\\.?$)[^/\\\\\\u0000-\\u001f]+$"
+        },
+        "kind": { "enum": ["file", "directory"] },
+        "sizeBytes": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+          ]
+        },
+        "contentSha256": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/sha256" }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "directory" } }, "required": ["kind"] },
+          "then": {
+            "properties": {
+              "sizeBytes": { "type": "null" },
+              "contentSha256": { "type": "null" }
+            }
+          }
+        }
+      ]
+    },
+    "directoryPayload": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "entries"],
+      "properties": {
+        "kind": { "const": "directory-summary" },
+        "entries": {
+          "type": "array", "maxItems": 256, "uniqueItems": true,
+          "items": { "$ref": "#/$defs/directoryEntry" }
+        }
+      }
+    }
+  }
+}

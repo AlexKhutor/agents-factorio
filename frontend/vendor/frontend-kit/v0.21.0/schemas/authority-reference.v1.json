@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/authority-reference.v1.json",
+  "title": "Work Orchestrator Authority Reference v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "authorityType",
+    "sourceId",
+    "externalId",
+    "contractVersion"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "authorityType": {
+      "enum": [
+        "human",
+        "provider",
+        "coordination-core",
+        "child-workspace",
+        "git-repository",
+        "external-semantic-source",
+        "presentation"
+      ]
+    },
+    "sourceId": { "type": "string", "minLength": 1, "maxLength": 96 },
+    "externalId": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "contractVersion": {
+      "type": "string",
+      "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "schemaId": { "type": "string", "minLength": 1, "maxLength": 512 },
+    "artifactSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

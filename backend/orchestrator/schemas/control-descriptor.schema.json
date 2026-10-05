@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/control-descriptor.schema.json",
+  "title": "isolateVsCode orchestrator control descriptor",
+  "type": "object",
+  "required": [
+    "formatVersion",
+    "protocolVersion",
+    "service",
+    "version",
+    "endpoint",
+    "token",
+    "processId",
+    "repoRoot",
+    "runtimeRoot",
+    "startedAtUtc"
+  ],
+  "properties": {
+    "formatVersion": { "const": 1 },
+    "protocolVersion": { "const": 1 },
+    "service": { "const": "isolate-vscode-orchestrator" },
+    "version": { "type": "string" },
+    "endpoint": { "type": "string", "pattern": "^http://(?:127\\.0\\.0\\.1|localhost|\\[::1\\]):[0-9]+$" },
+    "token": { "type": "string", "minLength": 32 },
+    "processId": { "type": "integer", "minimum": 1 },
+    "repoRoot": { "type": "string", "minLength": 1 },
+    "runtimeRoot": { "type": "string", "minLength": 1 },
+    "startedAtUtc": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}

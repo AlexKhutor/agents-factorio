@@ -1,0 +1,353 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/adapter-result.v1.json",
+  "title": "Normalized adapter result v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "contractVersion", "adapter", "operation", "observedAtUtc",
+    "authority", "freshness", "resultType", "outcome", "lifecycle", "retry",
+    "evidenceRefs", "data", "error", "extensions"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.3.0" },
+    "adapter": { "$ref": "adapter-common.schema.json#/$defs/identity" },
+    "operation": { "$ref": "adapter-common.schema.json#/$defs/operationIdentity" },
+    "observedAtUtc": { "$ref": "adapter-common.schema.json#/$defs/utc" },
+    "authority": { "$ref": "authority-reference.schema.json" },
+    "freshness": { "$ref": "#/$defs/freshness" },
+    "resultType": { "enum": ["success", "error"] },
+    "outcome": { "enum": ["accepted", "started", "completed", "failed", "cancelled", "interrupted", "unsupported", "unavailable", "stale", "ambiguous", "uncertain"] },
+    "lifecycle": { "$ref": "#/$defs/lifecycle" },
+    "retry": { "$ref": "#/$defs/retry" },
+    "evidenceRefs": {
+        "type": "array", "maxItems": 128, "uniqueItems": true,
+      "items": { "$ref": "external-reference.schema.json" }
+    },
+    "data": {},
+    "error": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/error" }] },
+    "extensions": {
+      "type": "array", "maxItems": 16, "uniqueItems": true,
+      "items": { "$ref": "#/$defs/extension" }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "resultType": { "const": "success" } }, "required": ["resultType"] },
+      "then": { "properties": { "error": { "type": "null" } } },
+      "else": { "properties": { "data": { "type": "null" }, "error": { "$ref": "#/$defs/error" } } }
+    },
+    {
+      "if": {
+        "properties": {
+          "resultType": { "const": "success" },
+          "operation": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "enum": ["interruptExecution", "resumeExecution", "cancelExecution"]
+              }
+            },
+            "required": ["name"]
+          }
+        },
+        "required": ["resultType", "operation"]
+      },
+      "then": {
+        "properties": {
+          "outcome": { "const": "accepted" },
+          "lifecycle": { "type": "object", "properties": { "state": { "const": "none" } } },
+          "data": { "$ref": "#/$defs/startData" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "resultType": { "const": "success" },
+          "operation": {
+            "type": "object", "properties": { "name": { "const": "startExecution" } },
+            "required": ["name"]
+          }
+        },
+        "required": ["resultType", "operation"]
+      },
+      "then": {
+        "properties": {
+          "outcome": { "const": "accepted" },
+          "lifecycle": { "type": "object", "properties": { "state": { "const": "none" } } },
+          "data": { "$ref": "#/$defs/startData" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "resultType": { "const": "success" },
+          "operation": {
+            "type": "object", "properties": { "name": { "const": "listModels" } },
+            "required": ["name"]
+          }
+        },
+        "required": ["resultType", "operation"]
+      },
+      "then": {
+        "properties": {
+          "outcome": { "const": "completed" },
+          "data": { "$ref": "#/$defs/modelData" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "resultType": { "const": "success" },
+          "operation": {
+            "type": "object", "properties": { "name": { "enum": ["createThread", "forkThread"] } },
+            "required": ["name"]
+          }
+        },
+        "required": ["resultType", "operation"]
+      },
+      "then": {
+        "properties": { "outcome": { "const": "accepted" }, "data": { "$ref": "#/$defs/threadData" } }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "resultType": { "const": "success" },
+          "operation": {
+            "type": "object", "properties": { "name": { "const": "listThreads" } },
+            "required": ["name"]
+          }
+        },
+        "required": ["resultType", "operation"]
+      },
+      "then": {
+        "properties": { "outcome": { "const": "completed" }, "data": { "$ref": "#/$defs/threadListData" } }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "resultType": { "const": "success" },
+          "operation": {
+            "type": "object", "properties": { "name": { "const": "readThread" } },
+            "required": ["name"]
+          }
+        },
+        "required": ["resultType", "operation"]
+      },
+      "then": {
+        "properties": { "outcome": { "const": "completed" }, "data": { "$ref": "#/$defs/threadReadData" } }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "resultType": { "const": "success" },
+          "operation": {
+            "type": "object", "properties": { "name": { "const": "openVisibleSurface" } },
+            "required": ["name"]
+          }
+        },
+        "required": ["resultType", "operation"]
+      },
+      "then": {
+        "properties": { "outcome": { "const": "completed" }, "data": { "$ref": "#/$defs/threadData" } }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "lifecycle": {
+            "type": "object",
+            "properties": { "state": { "not": { "const": "none" } } },
+            "required": ["state"]
+          }
+        },
+        "required": ["lifecycle"]
+      },
+      "then": {
+        "properties": {
+          "adapter": { "type": "object", "properties": { "adapterFamily": { "const": "execution-provider" } } },
+          "operation": {
+            "type": "object",
+            "properties": { "name": { "enum": ["readExecution", "observeLifecycle"] } }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "resultType": { "const": "success" },
+          "adapter": {
+            "type": "object",
+            "properties": { "adapterFamily": { "const": "semantic-work-source" } },
+            "required": ["adapterFamily"]
+          }
+        },
+        "required": ["resultType", "adapter"]
+      },
+      "then": {
+        "properties": {
+          "outcome": { "const": "completed" },
+          "lifecycle": { "type": "object", "properties": { "state": { "const": "none" } } }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "startData": {
+      "oneOf": [
+        { "$ref": "#/$defs/executionData" },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["commandSubjectRef"],
+          "properties": { "commandSubjectRef": { "$ref": "external-reference.schema.json" } }
+        }
+      ]
+    },
+    "threadData": {
+      "type": "object", "additionalProperties": false,
+      "required": ["threadRef"],
+      "properties": { "threadRef": { "$ref": "external-reference.schema.json" } }
+    },
+    "threadRecord": {
+      "type": "object", "additionalProperties": false,
+      "required": ["ref", "title", "state", "updatedAtUtc"],
+      "properties": {
+        "ref": { "$ref": "external-reference.schema.json" },
+        "title": { "oneOf": [{ "type": "null" }, { "type": "string", "minLength": 1, "maxLength": 256 }] },
+        "state": { "$ref": "adapter-common.schema.json#/$defs/id" },
+        "updatedAtUtc": { "oneOf": [{ "type": "null" }, { "$ref": "adapter-common.schema.json#/$defs/utc" }] }
+      }
+    },
+    "threadListData": {
+      "type": "object", "additionalProperties": false,
+      "required": ["records"],
+      "properties": {
+        "records": { "type": "array", "maxItems": 128, "uniqueItems": true, "items": { "$ref": "#/$defs/threadRecord" } }
+      }
+    },
+    "threadReadData": {
+      "type": "object", "additionalProperties": false,
+      "required": ["record"],
+      "properties": { "record": { "$ref": "#/$defs/threadRecord" } }
+    },
+    "modelData": {
+      "type": "object", "additionalProperties": false,
+      "required": ["records"],
+      "properties": {
+        "records": {
+          "type": "array", "maxItems": 128, "uniqueItems": true,
+          "items": { "$ref": "#/$defs/modelRecord" }
+        }
+      }
+    },
+    "modelRecord": {
+      "type": "object", "additionalProperties": false,
+      "required": ["ref", "name", "supportedReasoningEfforts", "defaultReasoningEffort"],
+      "properties": {
+        "ref": { "$ref": "external-reference.schema.json" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "supportedReasoningEfforts": {
+          "type": "array", "maxItems": 32, "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1, "maxLength": 96 }
+        },
+        "defaultReasoningEffort": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "minLength": 1, "maxLength": 96 }
+          ]
+        }
+      }
+    },
+    "executionData": {
+      "type": "object", "additionalProperties": false,
+      "required": ["executionRef"],
+      "properties": {
+        "executionRef": { "$ref": "external-reference.schema.json" }
+      }
+    },
+    "freshness": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "ageSeconds", "staleAfterSeconds"],
+      "properties": {
+        "status": { "enum": ["fresh", "stale", "unknown"] },
+        "ageSeconds": { "type": ["integer", "null"], "minimum": 0, "maximum": 604800 },
+        "staleAfterSeconds": { "type": "integer", "minimum": 1, "maximum": 604800 }
+      }
+    },
+    "lifecycle": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "state", "evidence", "eventId", "sequence", "cursor", "providerOccurredAtUtc"
+      ],
+      "properties": {
+        "state": { "enum": ["none", "started", "completed", "failed", "cancelled", "interrupted"] },
+        "evidence": { "enum": ["none", "provider-observed"] },
+        "eventId": { "type": ["string", "null"], "maxLength": 160 },
+        "sequence": { "type": ["integer", "null"], "minimum": 1 },
+        "cursor": { "type": ["string", "null"], "maxLength": 512 },
+        "providerOccurredAtUtc": {
+          "oneOf": [{ "type": "null" }, { "$ref": "adapter-common.schema.json#/$defs/utc" }]
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "state": { "const": "none" } }, "required": ["state"] },
+          "then": {
+            "properties": {
+              "evidence": { "const": "none" }, "eventId": { "type": "null" },
+              "sequence": { "type": "null" }, "cursor": { "type": "null" },
+              "providerOccurredAtUtc": { "type": "null" }
+            }
+          },
+          "else": {
+            "properties": {
+              "evidence": { "const": "provider-observed" }, "eventId": { "type": "string" },
+              "sequence": { "type": "integer", "minimum": 1 },
+              "cursor": { "type": "string", "minLength": 1 },
+              "providerOccurredAtUtc": {
+                "oneOf": [
+                  { "type": "null" },
+                  { "$ref": "adapter-common.schema.json#/$defs/utc" }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "retry": {
+      "type": "object", "additionalProperties": false,
+      "required": ["allowed", "reasonCode"],
+      "properties": {
+        "allowed": { "type": "boolean" },
+        "reasonCode": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,95}$" }
+      }
+    },
+    "error": {
+      "type": "object", "additionalProperties": false,
+      "required": ["code", "phase", "providerCategory"],
+      "properties": {
+        "code": { "enum": ["authentication_failed", "permission_denied", "rate_limited", "capability_unavailable", "operation_timeout", "provider_disconnected", "stale_observation", "identity_ambiguous", "operation_conflict", "provider_terminal_failure", "post_submit_uncertain", "adapter_internal_failure"] },
+        "phase": { "enum": ["pre-submit", "post-submit", "observation", "provider-terminal"] },
+        "providerCategory": { "type": ["string", "null"], "maxLength": 96 }
+      }
+    },
+    "extension": {
+      "type": "object", "additionalProperties": false,
+      "required": ["extensionId", "contractVersion", "data"],
+      "properties": {
+        "extensionId": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+){1,15}$" },
+        "contractVersion": { "$ref": "adapter-common.schema.json#/$defs/version" },
+        "data": {}
+      }
+    }
+  }
+}

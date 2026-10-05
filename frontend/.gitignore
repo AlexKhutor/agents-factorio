@@ -1,0 +1,54 @@
+# agents-factorio-atlas: what is NOT source.
+#
+# Everything here is machine-local, user-owned, or must never leave this PC.
+# Nothing in this list is required to build or run the application elsewhere;
+# docs/fresh-pc-setup.md explains how each item is recreated on a new machine.
+
+# --- Machine-local configuration ----------------------------------------------
+# Points the host at a controller root on THIS machine. config/local.example.json
+# is the committed template with placeholders only.
+/config/local.json
+/config/*.local.json
+/.claude/settings.local.json
+
+# --- Gateway connection artifacts ---------------------------------------------
+# The connection descriptor carries a bearer token and a loopback endpoint. It is
+# published by the backend, read only by the host process, and never copied here.
+connection.v1.json
+*.connection.v1.json
+/.project-local/
+
+# --- User data ----------------------------------------------------------------
+# Map geometry, window state and local preferences belong to the person using
+# this machine. They are exported and imported deliberately, never committed.
+/user-data/
+
+# --- Secrets and credentials --------------------------------------------------
+# Keys must never be committed, even to a private repository: history keeps them
+# after the file is deleted.
+.env
+.env.*
+*.pem
+*.key
+*.pfx
+*.p12
+/api/
+/secrets/
+
+# --- Data of the direct mode -------------------------------------------------
+# Projects, memories and conversations the desk keeps when it works with Claude
+# Code directly (config/direct*.json). Private working data.
+/direct-data/
+
+# --- Runtime output, dependencies, build products -----------------------------
+/logs/
+node_modules/
+/dist/
+/out/
+/release/
+*.log
+*.tmp
+.cache/
+Thumbs.db
+Desktop.ini
+.DS_Store

@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/application-owner-chat.v1.json",
+  "title": "Application Owner Chat v0.2.0",
+  "oneOf": [
+    { "$ref": "#/$defs/binding" },
+    { "$ref": "#/$defs/receipt" }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$"
+    },
+    "sourceId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{1,63}$"
+    },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "utc": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$",
+      "maxLength": 64
+    },
+    "provider": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["adapterId", "adapterVersion", "sourceId", "runtimeInstanceId"],
+      "properties": {
+        "adapterId": { "$ref": "#/$defs/id" },
+        "adapterVersion": { "type": "string", "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$" },
+        "sourceId": { "$ref": "#/$defs/sourceId" },
+        "runtimeInstanceId": { "$ref": "#/$defs/id" }
+      }
+    },
+    "executionProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model", "reasoningEffort", "fallbackPolicy"],
+      "properties": {
+        "model": { "$ref": "#/$defs/id" },
+        "reasoningEffort": { "$ref": "#/$defs/id" },
+        "fallbackPolicy": { "const": "deny" }
+      }
+    },
+    "externalRef": {
+      "$ref": "https://isolate-vscode.local/schemas/external-reference.v1.json"
+    },
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion", "contractVersion", "sourceId", "provider", "threadRef",
+        "selection", "selectedAtUtc", "bindingState", "activeTaskId",
+        "activeTurnRef", "threadState", "startAvailable", "steerAvailable"
+      ],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "contractVersion": { "const": "v0.2.0" },
+        "sourceId": { "$ref": "#/$defs/sourceId" },
+        "provider": { "$ref": "#/$defs/provider" },
+        "threadRef": { "$ref": "#/$defs/externalRef" },
+        "selection": { "enum": ["existing", "created"] },
+        "selectedAtUtc": { "$ref": "#/$defs/utc" },
+        "bindingState": {
+          "enum": [
+            "idle", "submitting", "running", "cancelling", "awaiting_operator",
+            "stop_unconfirmed", "unknown", "not-started"
+          ]
+        },
+        "activeTaskId": { "oneOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }] },
+        "activeTurnRef": {
+          "oneOf": [{ "$ref": "#/$defs/externalRef" }, { "type": "null" }]
+        },
+        "threadState": { "enum": ["idle", "active"] },
+        "startAvailable": { "type": "boolean" },
+        "steerAvailable": { "type": "boolean" }
+      }
+    },
+    "receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion", "contractVersion", "receiptId", "requestId",
+        "correlationId", "mode", "sourceId", "provider", "threadRef", "turnRef",
+        "commandState", "deliveryState", "reasonCode", "inputSha256",
+        "inputByteLength", "inputCharacterLength", "executionProfile",
+        "profileCatalogSha256", "profileCatalogObservedAtUtc",
+        "requestedAtUtc", "updatedAtUtc",
+        "acceptedAtUtc", "replay", "automaticRetryAllowed", "recordSha256"
+      ],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "contractVersion": { "const": "v0.2.0" },
+        "receiptId": { "$ref": "#/$defs/id" },
+        "requestId": { "$ref": "#/$defs/id" },
+        "correlationId": { "$ref": "#/$defs/id" },
+        "mode": { "enum": ["start", "steer"] },
+        "sourceId": { "$ref": "#/$defs/sourceId" },
+        "provider": { "$ref": "#/$defs/provider" },
+        "threadRef": { "$ref": "#/$defs/externalRef" },
+        "turnRef": { "oneOf": [{ "$ref": "#/$defs/externalRef" }, { "type": "null" }] },
+        "commandState": { "enum": ["prepared", "accepted", "not-applied", "uncertain"] },
+        "deliveryState": {
+          "enum": ["requested", "accepted", "started", "completed", "failed", "interrupted", "uncertain", "unknown"]
+        },
+        "reasonCode": {
+          "oneOf": [
+            { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,63}$" },
+            { "type": "null" }
+          ]
+        },
+        "inputSha256": { "$ref": "#/$defs/sha256" },
+        "inputByteLength": { "type": "integer", "minimum": 1, "maximum": 16384 },
+        "inputCharacterLength": { "type": "integer", "minimum": 1 },
+        "executionProfile": {
+          "oneOf": [{ "$ref": "#/$defs/executionProfile" }, { "type": "null" }]
+        },
+        "profileCatalogSha256": {
+          "oneOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }]
+        },
+        "profileCatalogObservedAtUtc": {
+          "oneOf": [{ "$ref": "#/$defs/utc" }, { "type": "null" }]
+        },
+        "requestedAtUtc": { "$ref": "#/$defs/utc" },
+        "updatedAtUtc": { "$ref": "#/$defs/utc" },
+        "acceptedAtUtc": { "oneOf": [{ "$ref": "#/$defs/utc" }, { "type": "null" }] },
+        "replay": { "type": "boolean" },
+        "automaticRetryAllowed": { "const": false },
+        "recordSha256": { "$ref": "#/$defs/sha256" }
+      }
+    }
+  }
+}

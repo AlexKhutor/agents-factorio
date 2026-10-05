@@ -1,0 +1,10 @@
+{
+  "agentDefaults": {
+    "settingSources": [
+      "project",
+      "local"
+    ],
+    "permissionMode": "acceptEdits",
+    "skills": []
+  }
+}

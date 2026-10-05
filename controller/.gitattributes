@@ -1,0 +1,3 @@
+# Task packets, reports and their companions are checked by SHA-256 across
+# folders and machines: keep every file's bytes exactly as written.
+* -text

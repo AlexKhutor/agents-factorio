@@ -1,0 +1,25 @@
+node_modules/
+.DS_Store
+Thumbs.db
+__pycache__/
+*.pyc
+
+# Machine-local state: tokens, databases, logs. Never commit these.
+# (controller/ has its own .gitignore that keeps its empty logs/ folder.)
+.project-local/
+/logs/
+frontend/logs/
+backend/logs/
+*.log
+
+# Atlas: the local configuration and Electron's data.
+frontend/config/local.json
+frontend/config/*.local.json
+frontend/user-data/
+frontend/direct-data/
+
+# Build outputs that are regenerated.
+backend/orchestrator/frontend-kit/dist/
+
+# Which private revision this copy was exported from (local only).
+EXPORT.json

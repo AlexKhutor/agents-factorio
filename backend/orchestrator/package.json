@@ -1,0 +1,22 @@
+{
+  "name": "agents-factorio-gateway",
+  "version": "0.146.0",
+  "private": true,
+  "description": "Agents Factorio Application Gateway: hosts Claude Code agents (Claude Agent SDK) with memory, write zones, permission modes and per-turn git commits.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node scripts/run-tests.mjs",
+    "build:application-gateway-runtime": "node scripts/build-application-gateway-runtime.mjs",
+    "verify:application-gateway-runtime": "node scripts/build-application-gateway-runtime.mjs --verify",
+    "build:frontend-kit": "node scripts/build-application-frontend-kit.mjs"
+  },
+  "devDependencies": {
+    "ajv": "8.18.0",
+    "ajv-formats": "3.0.1",
+    "esbuild": "0.25.9"
+  }
+}

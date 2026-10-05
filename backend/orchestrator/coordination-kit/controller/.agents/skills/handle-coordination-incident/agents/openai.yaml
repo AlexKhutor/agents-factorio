@@ -1,0 +1,7 @@
+interface:
+  display_name: "Handle Coordination Incident"
+  short_description: "Verify and route one bounded incident"
+  default_prompt: "Use $handle-coordination-incident to verify one immutable incident, select its owner-safe route, and stop instead of repairing another subsystem."
+
+policy:
+  allow_implicit_invocation: true

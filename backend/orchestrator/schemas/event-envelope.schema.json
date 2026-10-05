@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/event-envelope.schema.json",
+  "title": "isolateVsCode orchestrator event",
+  "type": "object",
+  "required": ["formatVersion", "sequence", "eventId", "atUtc", "type", "data"],
+  "properties": {
+    "formatVersion": { "const": 1 },
+    "sequence": { "type": "integer", "minimum": 1 },
+    "eventId": { "type": "string", "minLength": 1 },
+    "atUtc": { "type": "string", "format": "date-time" },
+    "type": { "type": "string", "minLength": 1 },
+    "workerId": { "type": ["string", "null"] },
+    "threadId": { "type": ["string", "null"] },
+    "turnId": { "type": ["string", "null"] },
+    "parentThreadId": { "type": ["string", "null"] },
+    "truncated": { "type": "boolean" },
+    "originalBytes": { "type": "integer", "minimum": 1 },
+    "data": {}
+  },
+  "additionalProperties": false
+}

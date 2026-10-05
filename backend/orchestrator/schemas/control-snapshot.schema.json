@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/control-snapshot.v1.json",
+  "title": "Orchestration Control Snapshot v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "sequence",
+    "mode",
+    "health",
+    "counts",
+    "tasks",
+    "agents",
+    "interventions",
+    "generatedAtUtc"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "sequence": { "type": "integer", "minimum": 0 },
+    "mode": { "enum": ["running", "paused", "draining", "emergency_stopped"] },
+    "health": { "enum": ["ready", "busy", "degraded", "stopped"] },
+    "reason": { "type": ["string", "null"], "maxLength": 1024 },
+    "counts": {
+      "type": "object",
+      "additionalProperties": { "type": "integer", "minimum": 0 }
+    },
+    "activeTaskId": { "type": ["string", "null"] },
+    "activeTaskKey": { "type": ["string", "null"], "maxLength": 193 },
+    "activeTaskIds": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "maxLength": 96 }
+    },
+    "activeTaskKeys": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "maxLength": 193 }
+    },
+    "tasks": {
+      "type": "array",
+      "items": { "$ref": "task-progress.schema.json" }
+    },
+    "agents": {
+      "type": "array",
+      "items": { "$ref": "agent-preview.schema.json" }
+    },
+    "interventions": {
+      "type": "array",
+      "maxItems": 256,
+      "items": { "$ref": "intervention-preview.schema.json" }
+    },
+    "publication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["intervalSeconds", "publishedAtUtc", "nextPublicationDueAtUtc"],
+      "properties": {
+        "intervalSeconds": { "type": "number", "minimum": 10, "maximum": 15 },
+        "publishedAtUtc": { "type": "string", "format": "date-time" },
+        "nextPublicationDueAtUtc": { "type": "string", "format": "date-time" }
+      }
+    },
+    "generatedAtUtc": { "type": "string", "format": "date-time" }
+  }
+}

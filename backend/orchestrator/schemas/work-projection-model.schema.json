@@ -1,0 +1,472 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/work-projection-model.v1.json",
+  "title": "Renderer-neutral Work Projection model v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "contractVersion",
+    "projectionId",
+    "sequence",
+    "publishedAtUtc",
+    "sourceReceipts",
+    "coherence",
+    "freshness",
+    "workItems"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "projectionId": { "$ref": "#/$defs/identifier" },
+    "sequence": { "type": "integer", "minimum": 0 },
+    "publishedAtUtc": { "$ref": "#/$defs/utc" },
+    "sourceReceipts": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": { "$ref": "#/$defs/sourceReceipt" }
+    },
+    "coherence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "receiptSetSha256"],
+      "properties": {
+        "status": { "const": "coherent" },
+        "receiptSetSha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "freshness": { "$ref": "#/$defs/freshness" },
+    "workItems": {
+      "type": "array",
+      "maxItems": 128,
+      "items": { "$ref": "#/$defs/workItem" }
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$"
+    },
+    "summary": { "type": "string", "minLength": 1, "maxLength": 1024 },
+    "utc": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "Z$",
+      "format": "date-time"
+    },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "evidenceRefs": {
+      "type": "array",
+      "maxItems": 32,
+      "items": { "$ref": "external-reference.schema.json" }
+    },
+    "sourceReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authority", "sourceSequence", "observedAtUtc", "artifactSha256"],
+      "properties": {
+        "authority": { "$ref": "authority-reference.schema.json" },
+        "sourceSequence": { "type": "integer", "minimum": 0 },
+        "observedAtUtc": { "$ref": "#/$defs/utc" },
+        "artifactSha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "lastKnownGood": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "reasonCode"],
+          "properties": {
+            "status": { "const": "unavailable" },
+            "reasonCode": { "$ref": "#/$defs/reasonCode" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "projectionId", "sequence", "publishedAtUtc", "artifactSha256"],
+          "properties": {
+            "status": { "const": "available" },
+            "projectionId": { "$ref": "#/$defs/identifier" },
+            "sequence": { "type": "integer", "minimum": 0 },
+            "publishedAtUtc": { "$ref": "#/$defs/utc" },
+            "artifactSha256": { "$ref": "#/$defs/sha256" }
+          }
+        }
+      ]
+    },
+    "freshness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "evaluatedAtUtc", "selectedObservedAtUtc", "staleAfterSeconds", "lastKnownGood"],
+      "properties": {
+        "status": { "enum": ["fresh", "stale"] },
+        "evaluatedAtUtc": { "$ref": "#/$defs/utc" },
+        "selectedObservedAtUtc": { "$ref": "#/$defs/utc" },
+        "staleAfterSeconds": { "type": "integer", "minimum": 1, "maximum": 86400 },
+        "lastKnownGood": { "$ref": "#/$defs/lastKnownGood" }
+      }
+    },
+    "reasonCode": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{0,63}$"
+    },
+    "workItemRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceId", "workItemId"],
+      "properties": {
+        "sourceId": { "$ref": "#/$defs/identifier" },
+        "workItemId": { "$ref": "#/$defs/identifier" }
+      }
+    },
+    "taskRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceId", "taskId", "taskContractVersion", "taskSha256"],
+      "properties": {
+        "sourceId": { "$ref": "#/$defs/identifier" },
+        "taskId": { "$ref": "#/$defs/identifier" },
+        "taskContractVersion": { "type": "string", "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$" },
+        "taskSha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "executionRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceId", "taskId", "executionId"],
+      "properties": {
+        "sourceId": { "$ref": "#/$defs/identifier" },
+        "taskId": { "$ref": "#/$defs/identifier" },
+        "executionId": { "$ref": "#/$defs/identifier" }
+      }
+    },
+    "unavailableFact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reasonCode", "authority", "evidenceRefs"],
+      "properties": {
+        "status": { "enum": ["unavailable", "unsupported"] },
+        "reasonCode": { "$ref": "#/$defs/reasonCode" },
+        "authority": { "$ref": "authority-reference.schema.json" },
+        "evidenceRefs": { "$ref": "#/$defs/evidenceRefs" }
+      }
+    },
+    "unavailableOnlyFact": {
+      "allOf": [
+        { "$ref": "#/$defs/unavailableFact" },
+        { "properties": { "status": { "const": "unavailable" } } }
+      ]
+    },
+    "confirmedIntent": {
+      "oneOf": [
+        { "$ref": "#/$defs/unavailableOnlyFact" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "summary", "authority", "confirmationRef", "evidenceRefs"],
+          "properties": {
+            "status": { "const": "available" },
+            "summary": { "$ref": "#/$defs/summary" },
+            "authority": { "$ref": "authority-reference.schema.json" },
+            "confirmationRef": { "$ref": "external-reference.schema.json" },
+            "evidenceRefs": { "$ref": "#/$defs/evidenceRefs" }
+          }
+        }
+      ]
+    },
+    "plan": {
+      "oneOf": [
+        { "$ref": "#/$defs/unavailableOnlyFact" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status", "planRef", "planRevision", "planSha256", "authority",
+            "confirmationRef", "evidenceRefs"
+          ],
+          "properties": {
+            "status": { "const": "available" },
+            "planRef": { "$ref": "external-reference.schema.json" },
+            "planRevision": { "$ref": "#/$defs/identifier" },
+            "planSha256": { "$ref": "#/$defs/sha256" },
+            "authority": { "$ref": "authority-reference.schema.json" },
+            "confirmationRef": { "$ref": "external-reference.schema.json" },
+            "evidenceRefs": { "$ref": "#/$defs/evidenceRefs" }
+          }
+        }
+      ]
+    },
+    "stage": {
+      "oneOf": [
+        { "$ref": "#/$defs/unavailableOnlyFact" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "stageId", "label", "stepState", "authority", "evidenceRefs"],
+          "properties": {
+            "status": { "const": "available" },
+            "stageId": { "$ref": "#/$defs/identifier" },
+            "label": { "type": "string", "minLength": 1, "maxLength": 256 },
+            "stepState": { "$ref": "#/$defs/stepState" },
+            "authority": { "$ref": "authority-reference.schema.json" },
+            "evidenceRefs": { "$ref": "#/$defs/evidenceRefs" }
+          }
+        }
+      ]
+    },
+    "stepState": {
+      "enum": ["pending", "in-progress", "blocked", "awaiting-decision", "completed"]
+    },
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stepId", "label", "stepState", "authority", "evidenceRefs"],
+      "properties": {
+        "stepId": { "$ref": "#/$defs/identifier" },
+        "label": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "stepState": { "$ref": "#/$defs/stepState" },
+        "authority": { "$ref": "authority-reference.schema.json" },
+        "evidenceRefs": { "$ref": "#/$defs/evidenceRefs" }
+      }
+    },
+    "activity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["done", "now", "next"],
+      "properties": {
+        "done": { "type": "array", "maxItems": 32, "items": { "$ref": "#/$defs/step" } },
+        "now": { "type": "array", "maxItems": 8, "items": { "$ref": "#/$defs/step" } },
+        "next": { "type": "array", "maxItems": 8, "items": { "$ref": "#/$defs/step" } }
+      }
+    },
+    "blocker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "conditionId", "kind", "conditionState", "summary", "targetKind",
+        "targetRef", "authority", "evidenceRefs"
+      ],
+      "properties": {
+        "conditionId": { "$ref": "#/$defs/identifier" },
+        "kind": { "enum": ["provider-failure", "coordination-blocker", "dependency-wait", "user-decision"] },
+        "conditionState": { "enum": ["active", "resolved"] },
+        "summary": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "targetKind": { "enum": ["work-item", "task", "execution"] },
+        "targetRef": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "authority": { "$ref": "authority-reference.schema.json" },
+        "evidenceRefs": { "$ref": "#/$defs/evidenceRefs" }
+      }
+    },
+    "dependency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dependencyId", "targetKind", "dependencyState", "authority", "evidenceRefs"],
+      "properties": {
+        "dependencyId": { "$ref": "#/$defs/identifier" },
+        "targetKind": { "enum": ["local", "external"] },
+        "localWorkItemRef": { "$ref": "#/$defs/workItemRef" },
+        "externalWorkItemRef": { "$ref": "external-reference.schema.json" },
+        "dependencyState": { "enum": ["satisfied", "waiting", "blocked", "unknown"] },
+        "authority": { "$ref": "authority-reference.schema.json" },
+        "evidenceRefs": { "$ref": "#/$defs/evidenceRefs" }
+      },
+      "oneOf": [
+        {
+          "required": ["localWorkItemRef"],
+          "properties": { "targetKind": { "const": "local" } },
+          "not": { "required": ["externalWorkItemRef"] }
+        },
+        {
+          "required": ["externalWorkItemRef"],
+          "properties": { "targetKind": { "const": "external" } },
+          "not": { "required": ["localWorkItemRef"] }
+        }
+      ]
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decisionId", "decisionKind", "decisionState", "summary", "authority", "evidenceRefs"],
+      "properties": {
+        "decisionId": { "$ref": "#/$defs/identifier" },
+        "decisionKind": {
+          "enum": [
+            "preserve-confirmed-intent",
+            "bind-confirmed-plan-revision",
+            "select-responsible-workspace",
+            "select-execution-profile",
+            "coordinate-dependency",
+            "set-coordination-priority",
+            "select-report-operation",
+            "select-continuation-policy",
+            "request-user-decision",
+            "set-resource-boundary",
+            "set-safety-boundary",
+            "validate-deterministic-evidence",
+            "publish-coordination-lifecycle",
+            "route-attention",
+            "reference-artifact",
+            "reference-surface"
+          ]
+        },
+        "decisionState": { "enum": ["pending", "resolved"] },
+        "summary": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "authority": { "$ref": "authority-reference.schema.json" },
+        "evidenceRefs": { "$ref": "#/$defs/evidenceRefs" }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifactRole", "artifactRef"],
+      "properties": {
+        "artifactRole": { "$ref": "#/$defs/identifier" },
+        "artifactRef": { "$ref": "external-reference.schema.json" }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "executionRef", "taskRef", "executionLifecycleState", "providerAuthority", "providerRefs"
+      ],
+      "properties": {
+        "executionRef": { "$ref": "#/$defs/executionRef" },
+        "taskRef": { "$ref": "#/$defs/taskRef" },
+        "executionLifecycleState": {
+          "enum": [
+            "pending", "starting", "running", "waiting-provider", "completed",
+            "failed", "interrupted", "cancelled", "unknown"
+          ]
+        },
+        "providerAuthority": { "$ref": "authority-reference.schema.json" },
+        "providerRefs": {
+          "type": "array",
+          "maxItems": 16,
+          "items": { "$ref": "external-reference.schema.json" }
+        }
+      }
+    },
+    "attentionItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["attentionEventId", "attentionState", "priority", "authority", "evidenceRefs"],
+      "properties": {
+        "attentionEventId": { "$ref": "#/$defs/identifier" },
+        "attentionState": { "enum": ["active", "resolved"] },
+        "priority": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "authority": { "$ref": "authority-reference.schema.json" },
+        "evidenceRefs": { "$ref": "#/$defs/evidenceRefs" }
+      }
+    },
+    "attention": {
+      "oneOf": [
+        { "$ref": "#/$defs/unavailableOnlyFact" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "items"],
+          "properties": {
+            "status": { "const": "available" },
+            "items": {
+              "type": "array",
+              "maxItems": 32,
+              "items": { "$ref": "#/$defs/attentionItem" }
+            }
+          }
+        }
+      ]
+    },
+    "semanticHierarchy": {
+      "oneOf": [
+        { "$ref": "#/$defs/unavailableFact" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "workstreamRefs", "authority", "evidenceRefs"],
+          "properties": {
+            "status": { "const": "available" },
+            "workstreamRefs": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 32,
+              "items": { "$ref": "external-reference.schema.json" }
+            },
+            "authority": { "$ref": "authority-reference.schema.json" },
+            "evidenceRefs": { "$ref": "#/$defs/evidenceRefs" }
+          }
+        }
+      ]
+    },
+    "workItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "workItemRef",
+        "workLifecycleState",
+        "confirmedIntent",
+        "plan",
+        "semanticHierarchy",
+        "currentStage",
+        "activity",
+        "blockers",
+        "dependencies",
+        "taskRefs",
+        "decisions",
+        "artifacts",
+        "executions",
+        "attention"
+      ],
+      "properties": {
+        "workItemRef": { "$ref": "#/$defs/workItemRef" },
+        "workLifecycleState": {
+          "enum": [
+            "planned", "ready", "in-progress", "blocked", "awaiting-decision",
+            "reported", "accepted", "rejected", "cancelled"
+          ]
+        },
+        "confirmedIntent": { "$ref": "#/$defs/confirmedIntent" },
+        "plan": { "$ref": "#/$defs/plan" },
+        "semanticHierarchy": { "$ref": "#/$defs/semanticHierarchy" },
+        "currentStage": { "$ref": "#/$defs/stage" },
+        "activity": { "$ref": "#/$defs/activity" },
+        "blockers": {
+          "type": "array",
+          "maxItems": 32,
+          "items": { "$ref": "#/$defs/blocker" }
+        },
+        "dependencies": {
+          "type": "array",
+          "maxItems": 64,
+          "items": { "$ref": "#/$defs/dependency" }
+        },
+        "taskRefs": {
+          "type": "array",
+          "maxItems": 32,
+          "items": { "$ref": "#/$defs/taskRef" }
+        },
+        "decisions": {
+          "type": "array",
+          "maxItems": 64,
+          "items": { "$ref": "#/$defs/decision" }
+        },
+        "artifacts": {
+          "type": "array",
+          "maxItems": 64,
+          "items": { "$ref": "#/$defs/artifact" }
+        },
+        "executions": {
+          "type": "array",
+          "maxItems": 64,
+          "items": { "$ref": "#/$defs/execution" }
+        },
+        "attention": { "$ref": "#/$defs/attention" }
+      }
+    }
+  }
+}

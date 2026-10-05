@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/application-project-workspace.v1.json",
+  "title": "Bound project file browsing v0.1.0",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "contractVersion", "operationId", "input"],
+  "properties": {
+    "schemaVersion": { "const": 1 }, "contractVersion": { "const": "v0.1.0" },
+    "operationId": { "enum": ["query.project-workspace.list", "query.project-workspace.read"] },
+    "input": { "type": "object" }
+  },
+  "allOf": [
+    { "if": { "properties": { "operationId": { "const": "query.project-workspace.list" } } },
+      "then": { "properties": { "input": { "$ref": "#/$defs/listInput" } } },
+      "else": { "properties": { "input": { "$ref": "#/$defs/readInput" } } } }
+  ],
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$", "maxLength": 160 },
+    "path": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "cursor": { "type": ["string", "null"], "minLength": 1, "maxLength": 2048 },
+    "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "listInput": {
+      "type": "object", "additionalProperties": false, "required": ["projectId"],
+      "properties": { "projectId": { "$ref": "#/$defs/id" }, "path": { "type": "string", "maxLength": 256 },
+        "limit": { "type": "integer", "minimum": 1, "maximum": 256 }, "cursor": { "$ref": "#/$defs/cursor" } }
+    },
+    "readInput": {
+      "type": "object", "additionalProperties": false, "required": ["projectId", "path"],
+      "properties": { "projectId": { "$ref": "#/$defs/id" }, "path": { "$ref": "#/$defs/path" },
+        "maximumBytes": { "type": "integer", "minimum": 1, "maximum": 65536 }, "cursor": { "$ref": "#/$defs/cursor" } }
+    },
+    "page": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "contractVersion", "projectId", "path", "kind", "contentSha256", "observedAtUtc", "truncated", "nextCursor"],
+      "properties": {
+        "schemaVersion": { "const": 1 }, "contractVersion": { "const": "v0.1.0" },
+        "projectId": { "$ref": "#/$defs/id" }, "path": { "type": "string", "maxLength": 256 },
+        "kind": { "enum": ["list", "read"] }, "contentSha256": { "$ref": "#/$defs/hash" },
+        "observedAtUtc": { "type": "string", "format": "date-time", "maxLength": 32 },
+        "truncated": { "type": "boolean" }, "nextCursor": { "$ref": "#/$defs/cursor" },
+        "entries": { "type": "array", "maxItems": 256, "items": {
+          "type": "object", "additionalProperties": false, "required": ["name", "kind", "sizeBytes", "contentSha256"],
+          "properties": { "name": { "type": "string", "maxLength": 512 }, "kind": { "enum": ["file", "directory"] },
+            "sizeBytes": { "type": ["integer", "null"], "minimum": 0 }, "contentSha256": { "type": "null" } }
+        } },
+        "omissionCount": { "type": "integer", "minimum": 0 }, "totalEntries": { "type": "integer", "minimum": 0, "maximum": 4096 },
+        "text": { "type": "string", "maxLength": 65536 },
+        "range": { "type": "object", "additionalProperties": false, "required": ["offsetBytes", "returnedBytes", "totalBytes"],
+          "properties": { "offsetBytes": { "type": "integer", "minimum": 0 },
+            "returnedBytes": { "type": "integer", "minimum": 0, "maximum": 65536 },
+            "totalBytes": { "type": "integer", "minimum": 0, "maximum": 1048576 } } }
+      },
+      "allOf": [{ "if": { "properties": { "kind": { "const": "list" } } },
+        "then": { "required": ["entries", "omissionCount", "totalEntries"], "properties": { "entries": true, "omissionCount": true, "totalEntries": true, "text": false, "range": false } },
+        "else": { "required": ["text", "range"], "properties": { "text": true, "range": true, "entries": false, "omissionCount": false, "totalEntries": false } } }]
+    }
+  }
+}

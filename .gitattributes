@@ -1,0 +1,4 @@
+# Bytes are stored exactly as they are on disk: no line-ending conversion.
+# Patch payloads, the Gateway bundle and the frontend kit are verified by
+# SHA-256; core.autocrlf on another machine must not rewrite them.
+* -text

@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/application-event-read-result.v1.json",
+  "title": "Application event read result v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "contractVersion", "mode", "streamId", "epoch",
+    "cursor", "events", "hasMore"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "mode": { "enum": ["snapshot-required", "resumed", "resync-required"] },
+    "streamId": { "$ref": "application-common.v1.json#/$defs/envelopeId" },
+    "epoch": { "$ref": "application-common.v1.json#/$defs/envelopeId" },
+    "cursor": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 768,
+      "pattern": "^application-cursor-v1\\."
+    },
+    "events": {
+      "type": "array",
+      "maxItems": 64,
+      "items": { "$ref": "application-event-envelope.v1.json" }
+    },
+    "hasMore": { "type": "boolean" },
+    "snapshotRef": { "$ref": "application-resource-ref.v1.json" },
+    "reasonCode": {
+      "enum": [
+        "initial_snapshot_required", "cursor_invalid", "stream_mismatch",
+        "epoch_mismatch", "cursor_ahead", "replay_gap"
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "mode": { "const": "resumed" } }, "required": ["mode"] },
+      "then": {
+        "not": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": { "snapshotRef": {} },
+              "required": ["snapshotRef"]
+            },
+            {
+              "type": "object",
+              "properties": { "reasonCode": {} },
+              "required": ["reasonCode"]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "if": { "properties": { "mode": { "const": "snapshot-required" } }, "required": ["mode"] },
+      "then": {
+        "required": ["snapshotRef", "reasonCode"],
+        "properties": {
+          "reasonCode": { "const": "initial_snapshot_required" },
+          "events": { "type": "array", "maxItems": 0 },
+          "hasMore": { "const": false }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "mode": { "const": "resync-required" } }, "required": ["mode"] },
+      "then": {
+        "required": ["snapshotRef", "reasonCode"],
+        "properties": {
+          "reasonCode": {
+            "enum": [
+              "cursor_invalid", "stream_mismatch", "epoch_mismatch",
+              "cursor_ahead", "replay_gap"
+            ]
+          },
+          "events": { "type": "array", "maxItems": 0 },
+          "hasMore": { "const": false }
+        }
+      }
+    }
+  ]
+}

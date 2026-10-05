@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/external-reference.v1.json",
+  "title": "Work Orchestrator External Reference v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "relationship",
+    "authority"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "kind": {
+      "enum": [
+        "provider-thread",
+        "provider-turn",
+        "provider-item",
+        "provider-subagent",
+        "semantic-workstream",
+        "semantic-work-item",
+        "semantic-decision",
+        "presentation-surface",
+        "artifact"
+      ]
+    },
+    "relationship": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "authority": {
+      "$ref": "https://isolate-vscode.local/schemas/authority-reference.v1.json"
+    },
+    "locator": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "label": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "semantic-decision"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "properties": {
+          "authority": {
+            "type": "object",
+            "properties": {
+              "authorityType": {
+                "const": "external-semantic-source"
+              }
+            },
+            "required": [
+              "authorityType"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

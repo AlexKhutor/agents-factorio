@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/application-authorization-ref.v1.json",
+  "title": "Application Authorization Reference v0.1",
+  "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/authorizationRef"
+}

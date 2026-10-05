@@ -1,0 +1,248 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/child-chat-bindings.v3.schema.json",
+  "title": "Managed OpenAI Codex child chat bindings v3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "sources"],
+  "properties": {
+    "schemaVersion": { "const": 3 },
+    "sources": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/binding" }
+    }
+  },
+  "$defs": {
+    "binding": {
+      "oneOf": [
+        { "$ref": "#/$defs/sessionBinding" },
+        { "$ref": "#/$defs/errorBinding" }
+      ]
+    },
+    "common": {
+      "type": "object",
+      "required": [
+        "mode",
+        "launchId",
+        "workspaceFingerprint",
+        "selectedAtUtc",
+        "state",
+        "activeTaskId",
+        "activeTurnId",
+        "lastError"
+      ],
+      "properties": {
+        "mode": { "enum": ["session", "error"] },
+        "launchId": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "workspaceFingerprint": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "selectedAtUtc": { "type": "string", "format": "date-time" },
+        "state": {
+          "enum": [
+            "idle",
+            "submitting",
+            "running",
+            "cancelling",
+            "awaiting_operator",
+            "stop_unconfirmed",
+            "unknown",
+            "not-started"
+          ]
+        },
+        "activeTaskId": { "type": ["string", "null"], "maxLength": 96 },
+        "activeTurnId": { "type": ["string", "null"], "maxLength": 256 },
+        "activeExecutionId": { "type": ["string", "null"], "maxLength": 160 },
+        "lastExecutionId": { "type": ["string", "null"], "maxLength": 160 },
+        "activeExecutionProfile": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/executionProfile" }]
+        },
+        "lastExecutionProfile": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/executionProfile" }]
+        },
+        "observation": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/observation" }
+          ]
+        },
+        "lastTaskId": { "type": "string", "maxLength": 96 },
+        "lastTurnId": { "type": ["string", "null"], "maxLength": 256 },
+        "lastTurnStatus": { "type": "string", "maxLength": 64 },
+        "lastStartedAtUtc": { "type": "string", "format": "date-time" },
+        "lastCompletedAtUtc": { "type": "string", "format": "date-time" },
+        "lastErrorAtUtc": { "type": "string", "format": "date-time" },
+        "cancellationRequestedAtUtc": { "type": "string", "format": "date-time" },
+        "pendingStop": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/pendingStop" }
+          ]
+        },
+        "lastInterruption": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "child-intervention.schema.json" }
+          ]
+        },
+        "retryAuthorizedTaskId": { "type": ["string", "null"], "maxLength": 96 },
+        "lastTaskSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "lastSubmissionConfirmed": { "type": ["boolean", "null"] },
+        "lastError": { "type": ["string", "null"], "maxLength": 1024 },
+        "lastErrorCode": { "type": ["string", "null"], "maxLength": 128 }
+      }
+    },
+    "pendingStop": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requestId",
+        "initiator",
+        "requestedBy",
+        "reason",
+        "taskId",
+        "turnId",
+        "requestedAtUtc"
+      ],
+      "properties": {
+        "requestId": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "initiator": { "const": "orchestrator" },
+        "requestedBy": { "type": "string", "minLength": 1, "maxLength": 96 },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "taskId": { "type": "string", "minLength": 1, "maxLength": 96 },
+        "turnId": { "type": ["string", "null"], "maxLength": 256 },
+        "requestedAtUtc": { "type": "string", "format": "date-time" }
+      }
+    },
+    "executionProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "model", "reasoningEffort"],
+      "properties": {
+        "provider": { "const": "openai" },
+        "model": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "displayName": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "reasoningEffort": { "type": "string", "minLength": 1, "maxLength": 32 },
+        "fallbackPolicy": { "const": "deny" },
+        "verified": { "type": "boolean" },
+        "uiLabel": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "observedModel": { "type": ["string", "null"], "maxLength": 128 },
+        "observedReasoningEffort": { "type": ["string", "null"], "maxLength": 32 },
+        "observedAtUtc": {
+          "oneOf": [{ "type": "null" }, { "type": "string", "format": "date-time" }]
+        },
+        "providerVerified": { "type": ["boolean", "null"] },
+        "source": { "type": "string", "maxLength": 64 }
+      }
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "rolloutOffset",
+        "taskStartedAtUtc",
+        "baselineReliable",
+        "baselineTotalTokenUsage",
+        "observerStartedAtUtc",
+        "observerHeartbeatAtUtc"
+      ],
+      "properties": {
+        "state": { "enum": ["pending", "watching", "failed"] },
+        "rolloutOffset": { "type": "integer", "minimum": 0 },
+        "taskStartedAtUtc": { "type": "string", "format": "date-time" },
+        "baselineReliable": { "type": "boolean" },
+        "baselineTotalTokenUsage": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "integer", "minimum": 0 },
+            { "type": "object" }
+          ]
+        },
+        "observerStartedAtUtc": { "type": "string", "format": "date-time" },
+        "observerHeartbeatAtUtc": { "type": "string", "format": "date-time" },
+        "observerErrorCode": { "type": ["string", "null"], "maxLength": 128 }
+      }
+    },
+    "sessionBinding": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "allOf": [
+        { "$ref": "#/$defs/common" },
+        {
+          "required": [
+            "mode",
+            "selection",
+            "threadId",
+            "threadUri",
+            "provider",
+            "transport",
+            "rolloutRelativePath",
+            "title"
+          ],
+          "properties": {
+            "mode": { "const": "session" },
+            "selection": { "enum": ["existing", "created"] },
+            "threadId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$"
+            },
+            "threadUri": {
+              "type": "string",
+              "pattern": "^openai-codex://route/local/[0-9a-f-]{36}$",
+              "maxLength": 128
+            },
+            "provider": { "const": "openai-codex-vscode" },
+            "transport": { "const": "vscode-extension-ui" },
+            "rolloutRelativePath": {
+              "type": ["string", "null"],
+              "pattern": "^sessions/",
+              "maxLength": 512
+            },
+            "title": { "type": ["string", "null"], "maxLength": 180 },
+            "creationAttemptId": { "type": "string", "format": "uuid" },
+            "creationStatus": { "enum": ["absent", "pending", "found", "ambiguous", "timeout"] },
+            "creationEvidence": {
+              "$ref": "child-chat-creations.schema.json#/$defs/attempt/properties/evidence"
+            },
+            "creationTimingsMs": {
+              "$ref": "child-chat-creations.schema.json#/$defs/timings"
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": { "rolloutRelativePath": { "type": "null" } },
+                "required": ["rolloutRelativePath"]
+              },
+              "then": {
+                "required": [
+                  "creationAttemptId",
+                  "creationStatus",
+                  "creationEvidence",
+                  "creationTimingsMs"
+                ],
+                "properties": {
+                  "selection": { "const": "created" },
+                  "creationStatus": { "const": "found" }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "errorBinding": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "allOf": [
+        { "$ref": "#/$defs/common" },
+        {
+          "required": ["mode", "reason"],
+          "properties": {
+            "mode": { "const": "error" },
+            "reason": { "type": "string", "minLength": 1, "maxLength": 512 }
+          }
+        }
+      ]
+    }
+  }
+}

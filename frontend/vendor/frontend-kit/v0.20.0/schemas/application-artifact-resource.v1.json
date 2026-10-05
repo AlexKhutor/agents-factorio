@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/application-artifact-resource.v1.json",
+  "title": "Application Artifact Resource Query v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "contractVersion", "operation", "artifactKind",
+    "resource", "requestedAtUtc"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "operation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "contractVersion", "family", "operationId"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "contractVersion": { "const": "v0.1.0" },
+        "family": { "const": "query" },
+        "operationId": { "const": "query.artifact-resource.read" }
+      }
+    },
+    "artifactKind": { "enum": ["report", "acceptance", "diagnostic", "review"] },
+    "resource": {
+      "allOf": [
+        { "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/resourceRef" },
+        {
+          "type": "object",
+          "required": ["contentSha256"],
+          "properties": {
+            "resourceKind": { "const": "artifact" },
+            "contentSha256": {
+              "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/sha256"
+            },
+            "revision": {
+              "type": "object",
+              "properties": { "kind": { "const": "sha256" } },
+              "required": ["kind"]
+            },
+            "authority": {
+              "type": "object",
+              "required": ["artifactSha256"],
+              "properties": {
+                "artifactSha256": {
+                  "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/sha256"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "requestedAtUtc": {
+      "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/utc"
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "artifactKind": { "const": "report" } }, "required": ["artifactKind"] },
+      "then": {
+        "properties": {
+          "resource": {
+            "type": "object",
+            "properties": {
+              "nativeId": { "type": "string", "pattern": "^knowledge/reports/inbox/" },
+              "authority": {
+                "type": "object",
+                "properties": { "authorityType": { "const": "child-workspace" } },
+                "required": ["authorityType"]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "artifactKind": { "const": "acceptance" } }, "required": ["artifactKind"] },
+      "then": { "$ref": "#/$defs/coordinationAcceptance" }
+    },
+    {
+      "if": { "properties": { "artifactKind": { "const": "diagnostic" } }, "required": ["artifactKind"] },
+      "then": { "$ref": "#/$defs/coordinationDiagnostic" }
+    },
+    {
+      "if": { "properties": { "artifactKind": { "const": "review" } }, "required": ["artifactKind"] },
+      "then": { "$ref": "#/$defs/coordinationReview" }
+    }
+  ],
+  "$defs": {
+    "coordinationAuthority": {
+      "type": "object",
+      "properties": {
+        "resource": {
+          "type": "object",
+          "properties": {
+            "authority": {
+              "type": "object",
+              "properties": { "authorityType": { "const": "coordination-core" } },
+              "required": ["authorityType"]
+            }
+          }
+        }
+      }
+    },
+    "coordinationAcceptance": {
+      "allOf": [
+        { "$ref": "#/$defs/coordinationAuthority" },
+        { "type": "object", "properties": { "resource": { "type": "object", "properties": { "nativeId": { "type": "string", "pattern": "^coordination/acceptances/" } } } } }
+      ]
+    },
+    "coordinationDiagnostic": {
+      "allOf": [
+        { "$ref": "#/$defs/coordinationAuthority" },
+        { "type": "object", "properties": { "resource": { "type": "object", "properties": { "nativeId": { "type": "string", "pattern": "^coordination/drafts/incidents/" } } } } }
+      ]
+    },
+    "coordinationReview": {
+      "allOf": [
+        { "$ref": "#/$defs/coordinationAuthority" },
+        { "type": "object", "properties": { "resource": { "type": "object", "properties": { "nativeId": { "type": "string", "pattern": "^coordination/reviews/" } } } } }
+      ]
+    }
+  }
+}

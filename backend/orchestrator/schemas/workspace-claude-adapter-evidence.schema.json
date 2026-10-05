@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/workspace-claude-adapter-evidence.schema.json",
+  "title": "IsolateClaudeCode workspace adapter evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "contractVersion", "handoffSha256", "routeId", "provider",
+    "sourceId", "workspaceId", "adapter", "executionProfile", "operations"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "handoffSha256": { "$ref": "#/$defs/sha256" },
+    "routeId": { "const": "claude-code" },
+    "provider": { "const": "anthropic" },
+    "sourceId": { "$ref": "#/$defs/identifier" },
+    "workspaceId": { "$ref": "#/$defs/identifier" },
+    "adapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["owner", "adapterId", "version"],
+      "properties": {
+        "owner": { "const": "claude-development" },
+        "adapterId": { "$ref": "#/$defs/identifier" },
+        "version": { "type": "string", "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$" }
+      }
+    },
+    "executionProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "model", "reasoningEffort", "fallbackPolicy"],
+      "properties": {
+        "provider": { "const": "anthropic" },
+        "model": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "reasoningEffort": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "fallbackPolicy": { "const": "deny" }
+      }
+    },
+    "operations": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 9,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["operation", "status", "evidenceKind", "evidenceRef", "observedAtUtc"],
+        "properties": {
+          "operation": {
+            "enum": [
+              "open", "close", "listSessions", "bindSession", "listProfiles",
+              "submitTask", "observeStart", "stopExecution", "returnReport"
+            ]
+          },
+          "status": { "enum": ["conformant", "unsupported", "failed"] },
+          "evidenceKind": { "enum": ["fixture", "live"] },
+          "evidenceRef": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^[A-Za-z0-9._/-]+$"
+          },
+          "observedAtUtc": { "type": "string", "format": "date-time" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$"
+    },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

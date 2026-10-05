@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/application-project-resource.v1.json",
+  "title": "Application Project Resource Query v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "contractVersion", "operation", "rootId", "readPolicyId",
+    "resource", "view", "slice", "maxEntries", "requestedAtUtc"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "operation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "contractVersion", "family", "operationId"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "contractVersion": { "const": "v0.1.0" },
+        "family": { "const": "query" },
+        "operationId": { "const": "query.project-resource.read" }
+      }
+    },
+    "rootId": { "$ref": "#/$defs/id" },
+    "readPolicyId": { "$ref": "#/$defs/id" },
+    "resource": {
+      "allOf": [
+        { "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/resourceRef" },
+        {
+          "type": "object",
+          "properties": {
+            "resourceKind": { "enum": ["project-file", "project-directory"] },
+            "authority": {
+              "type": "object",
+              "properties": {
+                "authorityType": { "enum": ["git-repository", "child-workspace"] }
+              },
+              "required": ["authorityType"]
+            }
+          }
+        }
+      ]
+    },
+    "view": { "enum": ["metadata", "text-slice", "directory-summary"] },
+    "slice": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["offsetBytes", "maximumBytes"],
+          "properties": {
+            "offsetBytes": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+            "maximumBytes": { "type": "integer", "minimum": 1, "maximum": 65536 }
+          }
+        }
+      ]
+    },
+    "maxEntries": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "integer", "minimum": 1, "maximum": 256 }
+      ]
+    },
+    "requestedAtUtc": {
+      "$ref": "https://isolate-vscode.local/schemas/application-common.v1.json#/$defs/utc"
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "view": { "const": "text-slice" } }, "required": ["view"] },
+      "then": {
+        "properties": {
+          "resource": { "type": "object", "properties": { "resourceKind": { "const": "project-file" } } },
+          "slice": { "type": "object" },
+          "maxEntries": { "type": "null" }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "view": { "const": "directory-summary" } }, "required": ["view"] },
+      "then": {
+        "properties": {
+          "resource": { "type": "object", "properties": { "resourceKind": { "const": "project-directory" } } },
+          "slice": { "type": "null" },
+          "maxEntries": { "type": "integer", "minimum": 1, "maximum": 256 }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "view": { "const": "metadata" } }, "required": ["view"] },
+      "then": {
+        "properties": {
+          "slice": { "type": "null" },
+          "maxEntries": { "type": "null" }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$" }
+  }
+}

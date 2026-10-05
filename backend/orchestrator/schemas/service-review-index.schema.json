@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/service-review-index.v1.json",
+  "title": "Service Review Diagnostic Index v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "generatedAtUtc", "records"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "generatedAtUtc": { "type": "string", "format": "date-time" },
+    "records": {
+      "type": "array",
+      "maxItems": 5000,
+      "items": { "$ref": "#/$defs/record" }
+    }
+  },
+  "$defs": {
+    "nullableText": { "type": ["string", "null"], "maxLength": 2048 },
+    "reference": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "sha256"],
+          "properties": {
+            "path": { "type": "string", "minLength": 1, "maxLength": 1024 },
+            "sha256": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" }
+          }
+        }
+      ]
+    },
+    "rawTrace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["available", "home", "locator", "sha256", "bytes", "archiveState"],
+      "properties": {
+        "available": { "type": "boolean" },
+        "home": { "const": "reviewer-codex-home" },
+        "locator": { "type": ["string", "null"], "maxLength": 2048 },
+        "sha256": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+        "bytes": { "type": ["integer", "null"], "minimum": 0 },
+        "archiveState": { "enum": ["live", "copied", "archived", "missing", "not-applicable"] }
+      }
+    },
+    "record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "serviceRunId",
+        "kind",
+        "sourceId",
+        "taskId",
+        "itemId",
+        "attempt",
+        "provider",
+        "serviceName",
+        "model",
+        "codexVersion",
+        "clientVersion",
+        "promptTemplateVersion",
+        "status",
+        "resultSummary",
+        "problems",
+        "report",
+        "decision",
+        "threadId",
+        "turnId",
+        "startedAtUtc",
+        "finishedAtUtc",
+        "rawTrace",
+        "updatedAtUtc"
+      ],
+      "properties": {
+        "serviceRunId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._:-]{0,255}$" },
+        "kind": { "const": "child-report-review" },
+        "sourceId": { "type": ["string", "null"], "maxLength": 96 },
+        "taskId": { "type": ["string", "null"], "maxLength": 96 },
+        "itemId": { "type": ["string", "null"], "maxLength": 256 },
+        "attempt": { "type": ["integer", "null"], "minimum": 0 },
+        "provider": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "serviceName": { "type": ["string", "null"], "maxLength": 128 },
+        "model": { "type": ["string", "null"], "maxLength": 128 },
+        "codexVersion": { "type": ["string", "null"], "maxLength": 128 },
+        "clientVersion": { "type": ["string", "null"], "maxLength": 64 },
+        "promptTemplateVersion": { "type": ["string", "null"], "maxLength": 64 },
+        "status": { "enum": ["starting", "running", "completed", "interrupted", "failed", "stop_unconfirmed", "migrated"] },
+        "resultSummary": { "$ref": "#/$defs/nullableText" },
+        "problems": {
+          "type": "array",
+          "maxItems": 20,
+          "uniqueItems": true,
+          "items": { "type": "string", "maxLength": 512 }
+        },
+        "report": { "$ref": "#/$defs/reference" },
+        "decision": { "$ref": "#/$defs/reference" },
+        "threadId": { "type": ["string", "null"], "maxLength": 256 },
+        "turnId": { "type": ["string", "null"], "maxLength": 256 },
+        "startedAtUtc": { "type": "string", "format": "date-time" },
+        "finishedAtUtc": { "type": ["string", "null"], "format": "date-time" },
+        "rawTrace": { "$ref": "#/$defs/rawTrace" },
+        "updatedAtUtc": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "name": "agents-factorio-atlas",
+  "version": "0.30.0",
+  "private": true,
+  "description": "Desktop client for the Agents Factorio Application Gateway: World, Project, Feature and Agent",
+  "license": "AGPL-3.0-only",
+  "main": "src/host/main.mjs",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev-fixture",
+    "paperclip": "electron . --paperclip",
+    "probe:paperclip": "node tools/probe-paperclip.mjs",
+    "test:paperclip": "node tools/test-paperclip-bridge.mjs",
+    "test:chat-view": "node tools/test-chat-view.mjs",
+    "direct": "electron . --direct",
+    "test:direct": "node tools/test-direct-bridge.mjs",
+    "account": "node tools/claude-account.mjs",
+    "probe": "node tools/probe-connection.mjs",
+    "probe:dev": "node tools/probe-connection.mjs --dev-fixture",
+    "verify:kit": "node tools/verify-kit.mjs",
+    "test:delivery": "node tools/test-delivery.mjs",
+    "test:kit-conformance": "node tools/run-kit-conformance.mjs",
+    "test:trusted-actions": "node tools/test-trusted-actions.mjs",
+    "test:mutations": "node tools/test-mutations.mjs",
+    "test:layout": "node tools/test-layout.mjs",
+    "test:scene": "node tools/test-scene.mjs",
+    "test:fixture": "node tools/test-fixture-shape.mjs",
+    "test:world-view": "node tools/test-world-view.mjs",
+    "test:feed": "node tools/test-feed.mjs",
+    "test:evidence": "node tools/test-evidence.mjs",
+    "test:contract": "node tools/test-contract.mjs",
+    "test:outcomes": "node tools/test-outcomes.mjs",
+    "test:provider-models": "node tools/test-provider-models.mjs",
+    "test:move-over": "node tools/test-move-over.mjs",
+    "test:agent-workspace": "node tools/test-agent-workspace.mjs",
+    "test:ui": "node tools/test-ui-scenes.mjs",
+    "test:ui-status": "node tools/test-ui-status.mjs",
+    "test": "node tools/verify-kit.mjs && node tools/test-delivery.mjs && node tools/run-kit-conformance.mjs && node tools/test-trusted-actions.mjs && node tools/test-mutations.mjs && node tools/test-layout.mjs && node tools/test-scene.mjs && node tools/test-fixture-shape.mjs && node tools/test-world-view.mjs && node tools/test-feed.mjs && node tools/test-evidence.mjs && node tools/test-contract.mjs && node tools/test-outcomes.mjs && node tools/test-provider-models.mjs && node tools/test-move-over.mjs && node tools/test-turn-seen.mjs && node tools/test-agent-workspace.mjs && node tools/test-ui-status.mjs && node tools/test-paperclip-bridge.mjs && node tools/test-chat-view.mjs && node tools/test-direct-bridge.mjs && node tools/probe-connection.mjs --dev-fixture"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "0.3.288"
+  },
+  "devDependencies": {
+    "electron": "^41.7.1"
+  }
+}

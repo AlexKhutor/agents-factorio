@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "workspace-claude-executor.schema.json",
+  "title": "Claude Executor Package v0.1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "contractVersion", "provider", "owner", "packageVersion", "adapterVersion", "kitVersion", "entryPoint", "files", "packageSha256"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "provider": { "const": "anthropic" },
+    "owner": { "const": "claude-development" },
+    "packageVersion": { "$ref": "#/$defs/version" },
+    "adapterVersion": { "$ref": "#/$defs/version" },
+    "kitVersion": { "enum": ["v0.10.0", "v0.10.1"] },
+    "entryPoint": { "type": "string", "maxLength": 240, "pattern": "^[A-Za-z0-9._/-]+\\.ps1$" },
+    "packageSha256": { "$ref": "#/$defs/hash" },
+    "files": {
+      "type": "array", "minItems": 3, "maxItems": 128,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["path", "sha256"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1, "maxLength": 240, "pattern": "^[A-Za-z0-9._/-]+$" },
+          "sha256": { "$ref": "#/$defs/hash" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "version": { "type": "string", "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$" }
+  }
+}

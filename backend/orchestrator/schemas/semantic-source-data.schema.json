@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/semantic-source-data.v1.json",
+  "title": "Versioned semantic source data v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "contractVersion", "completeness", "records"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "completeness": { "$ref": "#/$defs/completeness" },
+    "records": {
+      "type": "array",
+      "maxItems": 128,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/record" }
+    }
+  },
+  "$defs": {
+    "utc": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$",
+      "maxLength": 64
+    },
+    "completeness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reasonCode", "nextCursor"],
+      "properties": {
+        "status": { "enum": ["complete", "partial"] },
+        "reasonCode": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,95}$" }
+          ]
+        },
+        "nextCursor": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "minLength": 1, "maxLength": 512 }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "status": { "const": "complete" } },
+            "required": ["status"]
+          },
+          "then": {
+            "properties": {
+              "reasonCode": { "type": "null" },
+              "nextCursor": { "type": "null" }
+            }
+          },
+          "else": {
+            "properties": {
+              "reasonCode": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,95}$" }
+            }
+          }
+        }
+      ]
+    },
+    "record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref", "observedAtUtc", "sourceUpdatedAtUtc", "linkRefs"],
+      "properties": {
+        "ref": { "$ref": "#/$defs/semanticRecordRef" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "observedAtUtc": { "$ref": "#/$defs/utc" },
+        "sourceUpdatedAtUtc": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/utc" }]
+        },
+        "linkRefs": {
+          "type": "array",
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": { "$ref": "external-reference.schema.json" }
+        }
+      }
+    },
+    "semanticRecordRef": {
+      "allOf": [
+        { "$ref": "external-reference.schema.json" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "enum": [
+                "semantic-workstream", "semantic-work-item",
+                "semantic-decision", "artifact"
+              ]
+            },
+            "authority": {
+              "type": "object",
+              "properties": {
+                "authorityType": { "const": "external-semantic-source" }
+              },
+              "required": ["authorityType"]
+            }
+          },
+          "required": ["kind", "authority"]
+        }
+      ]
+    }
+  }
+}

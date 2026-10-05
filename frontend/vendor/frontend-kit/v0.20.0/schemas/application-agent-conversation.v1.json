@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/application-agent-conversation.v1.json",
+  "title": "Agent-bound Codex conversation v0.1.0",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "contractVersion", "operationId", "input"],
+  "properties": {
+    "schemaVersion": { "const": 1 }, "contractVersion": { "const": "v0.1.0" },
+    "operationId": { "enum": ["query.agent-conversation.resolve", "query.agent-conversation.read"] },
+    "input": { "$ref": "#/$defs/readInput" }
+  },
+  "allOf": [{
+    "if": { "properties": { "operationId": { "const": "query.agent-conversation.resolve" } } },
+    "then": { "properties": { "input": { "$ref": "#/$defs/resolveInput" } } }
+  }],
+  "$defs": {
+    "thread": {
+      "type": "object", "additionalProperties": false,
+      "required": ["threadRef", "parentThreadRef", "title", "state", "archived", "updatedAtUtc", "activeTurnRef"],
+      "properties": {
+        "threadRef": { "$ref": "#/$defs/ref" },
+        "parentThreadRef": { "anyOf": [{ "$ref": "#/$defs/ref" }, { "type": "null" }] },
+        "activeTurnRef": { "anyOf": [{ "$ref": "#/$defs/ref" }, { "type": "null" }] },
+        "title": { "type": ["string", "null"], "maxLength": 256 },
+        "state": { "enum": ["empty", "idle", "active", "completed", "failed", "interrupted", "unknown"] },
+        "archived": { "type": "boolean" }, "updatedAtUtc": { "$ref": "#/$defs/nullableUtc" }
+      }
+    },
+    "turn": {
+      "type": "object", "additionalProperties": false,
+      "required": ["turnRef", "threadRef", "state", "startedAtUtc", "completedAtUtc", "itemCount"],
+      "properties": {
+        "turnRef": { "$ref": "#/$defs/ref" }, "threadRef": { "$ref": "#/$defs/ref" },
+        "state": { "enum": ["pending", "active", "completed", "failed", "interrupted", "unknown"] },
+        "startedAtUtc": { "$ref": "#/$defs/nullableUtc" }, "completedAtUtc": { "$ref": "#/$defs/nullableUtc" },
+        "itemCount": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "content": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "contractVersion", "provider", "itemRef", "turnRef", "contentClass", "role", "visibility", "text", "contentSha256", "omissionReason", "observedAtUtc"],
+      "properties": {
+        "schemaVersion": { "const": 1 }, "contractVersion": { "const": "v0.1.0" },
+        "provider": { "$ref": "https://isolate-vscode.local/schemas/adapter-common.v1.json#/$defs/identity" },
+        "itemRef": { "$ref": "#/$defs/ref" }, "turnRef": { "$ref": "#/$defs/ref" },
+        "contentClass": { "enum": ["user-message", "assistant-message", "tool-summary", "change-summary", "interaction-summary", "omitted"] },
+        "role": { "enum": ["user", "assistant", "tool", null] },
+        "visibility": { "enum": ["user-visible", "omitted"] },
+        "text": { "type": ["string", "null"], "maxLength": 65536 },
+        "contentSha256": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+        "omissionReason": { "enum": [null, "hidden_reasoning", "private_provider_payload", "unsupported_content", "unsafe_content", "oversized_content", "media_bytes", "raw_log"] },
+        "observedAtUtc": { "$ref": "#/$defs/utc" }
+      },
+      "allOf": [{
+        "if": { "properties": { "visibility": { "const": "omitted" } } },
+        "then": { "properties": { "text": { "type": "null" }, "contentSha256": { "type": "null" },
+          "contentClass": { "const": "omitted" }, "role": { "type": "null" }, "omissionReason": { "type": "string" } } },
+        "else": { "properties": { "text": { "type": "string", "minLength": 1 }, "contentSha256": { "type": "string" },
+          "contentClass": { "not": { "const": "omitted" } }, "role": { "type": "string" }, "omissionReason": { "type": "null" } } }
+      }]
+    },
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$", "maxLength": 160 },
+    "utc": { "type": "string", "format": "date-time", "maxLength": 32, "pattern": "Z$" },
+    "nullableUtc": { "anyOf": [{ "$ref": "#/$defs/utc" }, { "type": "null" }] },
+    "conversationId": { "type": "string", "pattern": "^conversation:[a-f0-9]{64}$" },
+    "cursor": { "type": ["string", "null"], "minLength": 1, "maxLength": 2048 },
+    "ref": { "$ref": "https://isolate-vscode.local/schemas/external-reference.v1.json" },
+    "resolveInput": {
+      "type": "object", "additionalProperties": false, "required": ["agentId"],
+      "properties": { "agentId": { "$ref": "#/$defs/id" } }
+    },
+    "readInput": {
+      "type": "object", "additionalProperties": false, "required": ["agentId"],
+      "properties": { "agentId": { "$ref": "#/$defs/id" }, "cursor": { "$ref": "#/$defs/cursor" },
+        "limit": { "type": "integer", "minimum": 1, "maximum": 128 } }
+    },
+    "binding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "contractVersion", "agentId", "conversationId", "archiveCoverage", "liveRead"],
+      "properties": {
+        "schemaVersion": { "const": 1 }, "contractVersion": { "const": "v0.1.0" },
+        "agentId": { "$ref": "#/$defs/id" },
+        "conversationId": { "anyOf": [{ "$ref": "#/$defs/conversationId" }, { "type": "null" }] },
+        "archiveCoverage": { "const": "captured-only" },
+        "liveRead": {
+          "type": "object", "additionalProperties": false, "required": ["status", "reasonCode"],
+          "properties": { "status": { "enum": ["available", "unavailable"] },
+            "reasonCode": { "enum": ["available", "agent_unbound", "agent_archived", "provider_unavailable", "provider_identity_mismatch"] } }
+        }
+      }
+    },
+    "page": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "contractVersion", "agentId", "conversationId", "mode", "revision", "nextCursor", "observedAtUtc", "thread", "turns", "content", "completeness"],
+      "properties": {
+        "schemaVersion": { "const": 1 }, "contractVersion": { "const": "v0.1.0" },
+        "agentId": { "$ref": "#/$defs/id" }, "conversationId": { "$ref": "#/$defs/conversationId" },
+        "mode": { "const": "provider-read" }, "revision": { "$ref": "#/$defs/utc" },
+        "nextCursor": { "$ref": "#/$defs/cursor" }, "observedAtUtc": { "$ref": "#/$defs/utc" },
+        "thread": { "$ref": "#/$defs/thread" },
+        "turns": { "type": "array", "maxItems": 128, "items": { "$ref": "#/$defs/turn" } },
+        "content": { "type": "array", "maxItems": 256, "items": { "$ref": "#/$defs/content" } },
+        "completeness": {
+          "type": "object", "additionalProperties": false, "required": ["status", "reasonCode"],
+          "properties": { "status": { "enum": ["complete", "partial", "metadata-only"] },
+            "reasonCode": { "type": ["string", "null"], "maxLength": 96 } }
+        }
+      }
+    }
+  }
+}

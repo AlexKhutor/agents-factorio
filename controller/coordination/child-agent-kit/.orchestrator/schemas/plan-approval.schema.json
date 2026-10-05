@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/plan-approval.v0.1.0.json",
+  "title": "Confirmed Child Plan Approval v0.1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "contractVersion",
+    "status",
+    "workflowPolicy",
+    "taskId",
+    "sourceId",
+    "taskSha256",
+    "planRevision",
+    "planSha256",
+    "confirmedBy",
+    "confirmedAtUtc",
+    "note"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "status": { "const": "confirmed" },
+    "workflowPolicy": { "const": "intent-confirm-plan-v1" },
+    "taskId": { "$ref": "#/$defs/id" },
+    "sourceId": { "$ref": "#/$defs/id" },
+    "taskSha256": { "$ref": "#/$defs/sha256" },
+    "planRevision": { "type": "integer", "minimum": 1 },
+    "planSha256": { "$ref": "#/$defs/sha256" },
+    "confirmedBy": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "confirmedAtUtc": { "type": "string", "format": "date-time" },
+    "note": { "type": ["string", "null"], "maxLength": 2048 }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,95}$" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

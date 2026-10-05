@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/authority-reconciliation-event.v0.1.0.json",
+  "title": "Authority Reconciliation Event v0.1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "contractVersion",
+    "eventId",
+    "fieldId",
+    "reconciledAtUtc",
+    "expectedAuthority",
+    "availability",
+    "freshnessTimestampField",
+    "staleAfterSeconds",
+    "futureSkewSeconds",
+    "observationDigests",
+    "result"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "eventId": {
+      "type": "string",
+      "pattern": "^authority-reconciliation-[a-f0-9]{64}$"
+    },
+    "fieldId": { "type": "string", "minLength": 1, "maxLength": 160 },
+    "reconciledAtUtc": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$",
+      "maxLength": 64
+    },
+    "expectedAuthority": { "$ref": "authority-reference.schema.json" },
+    "availability": {
+      "enum": ["available", "unavailable", "unsupported", "unknown"]
+    },
+    "freshnessTimestampField": {
+      "enum": ["occurredAtUtc", "observedAtUtc", "heartbeatAtUtc"]
+    },
+    "staleAfterSeconds": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 604800
+    },
+    "futureSkewSeconds": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 300
+    },
+    "lastKnownGoodProvenanceSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "observationDigests": {
+      "type": "array",
+      "maxItems": 32,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["observationId", "sha256"],
+        "properties": {
+          "observationId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        }
+      }
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "provenanceSha256", "mutationAllowed"],
+      "properties": {
+        "status": {
+          "enum": [
+            "current",
+            "stale",
+            "unavailable",
+            "unsupported",
+            "unknown",
+            "contradictory",
+            "authority-mismatch",
+            "ambiguous"
+          ]
+        },
+        "provenanceSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "mutationAllowed": { "type": "boolean" }
+      }
+    }
+  }
+}

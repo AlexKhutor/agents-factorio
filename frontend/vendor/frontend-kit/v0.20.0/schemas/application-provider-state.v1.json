@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/application-provider-state.v1.json",
+  "title": "Application Provider Operation State v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "contractVersion", "provider", "capabilitiesObservedAtUtc",
+    "capabilitiesValidUntilUtc", "projectedAtUtc", "operations"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "provider": { "$ref": "#/$defs/provider" },
+    "capabilitiesObservedAtUtc": { "$ref": "#/$defs/utc" },
+    "capabilitiesValidUntilUtc": { "$ref": "#/$defs/utc" },
+    "projectedAtUtc": { "$ref": "#/$defs/utc" },
+    "operations": {
+      "type": "array", "minItems": 12, "maxItems": 12,
+      "items": { "$ref": "#/$defs/operationState" }
+    }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$" },
+    "version": { "type": "string", "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "utc": { "type": "string", "format": "date-time", "pattern": "Z$", "maxLength": 64 },
+    "provider": {
+      "type": "object", "additionalProperties": false,
+      "required": ["adapterId", "adapterVersion", "sourceId", "runtimeInstanceId"],
+      "properties": {
+        "adapterId": { "$ref": "#/$defs/id" },
+        "adapterVersion": { "$ref": "#/$defs/version" },
+        "sourceId": { "$ref": "#/$defs/id" },
+        "runtimeInstanceId": { "$ref": "#/$defs/id" }
+      }
+    },
+    "support": {
+      "type": "object", "additionalProperties": false,
+      "required": ["state", "level"],
+      "properties": {
+        "state": { "enum": ["supported", "unsupported"] },
+        "level": { "type": ["string", "null"], "enum": ["native", "emulated", "experimental", "degraded", null] }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "state": { "const": "unsupported" } }, "required": ["state"] },
+          "then": { "properties": { "level": { "type": "null" } } }
+        },
+        {
+          "if": { "properties": { "state": { "const": "supported" } }, "required": ["state"] },
+          "then": { "properties": { "level": { "enum": ["native", "emulated", "experimental", "degraded"] } } }
+        }
+      ]
+    },
+    "operationState": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "operation", "support", "availability", "permission", "providerHealth",
+        "selectable", "retryable", "reasonCode", "providerErrorCode"
+      ],
+      "properties": {
+        "operation": { "$ref": "https://isolate-vscode.local/schemas/application-operation-ref.v1.json" },
+        "support": { "$ref": "#/$defs/support" },
+        "availability": { "enum": ["available", "temporarily-unavailable", "unknown"] },
+        "permission": { "enum": ["allowed", "denied", "not-evaluated"] },
+        "providerHealth": { "enum": ["healthy", "failed", "unknown"] },
+        "selectable": { "type": "boolean" },
+        "retryable": { "type": "boolean" },
+        "reasonCode": {
+          "enum": [
+            "available", "permission-not-evaluated", "permission-denied",
+            "no-generic-binding", "capability-not-advertised", "adapter-reported-unavailable",
+            "capability-expired", "provider-failure"
+          ]
+        },
+        "providerErrorCode": {
+          "type": ["string", "null"],
+          "enum": [
+            "authentication_failed", "rate_limited", "capability_unavailable",
+            "operation_timeout", "provider_disconnected", "stale_observation",
+            "identity_ambiguous", "operation_conflict", "provider_terminal_failure",
+            "post_submit_uncertain", "adapter_internal_failure", null
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "selectable": { "const": true } }, "required": ["selectable"] },
+          "then": {
+            "properties": {
+              "support": {
+                "type": "object",
+                "properties": { "state": { "const": "supported" } }
+              },
+              "availability": { "const": "available" },
+              "permission": { "const": "allowed" },
+              "providerHealth": { "const": "healthy" }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "providerHealth": { "const": "failed" } }, "required": ["providerHealth"] },
+          "then": { "properties": { "providerErrorCode": { "type": "string" } } },
+          "else": { "properties": { "providerErrorCode": { "type": "null" } } }
+        }
+      ]
+    }
+  }
+}

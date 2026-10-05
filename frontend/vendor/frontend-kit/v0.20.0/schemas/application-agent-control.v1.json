@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/application-agent-control.v1.json",
+  "title": "Exact memory-agent control v0.1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "contractVersion", "operationId", "input"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.1.0" },
+    "operationId": { "enum": ["query.agent-control.interactions", "approval.agent-control.respond", "mutation.agent-control.interrupt"] },
+    "input": { "type": "object" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "operationId": { "const": "query.agent-control.interactions" } } },
+      "then": { "properties": { "input": { "$ref": "#/$defs/read" } } }
+    },
+    {
+      "if": { "properties": { "operationId": { "const": "approval.agent-control.respond" } } },
+      "then": { "properties": { "input": { "$ref": "#/$defs/respond" } } }
+    },
+    {
+      "if": { "properties": { "operationId": { "const": "mutation.agent-control.interrupt" } } },
+      "then": { "properties": { "input": { "$ref": "#/$defs/interrupt" } } }
+    }
+  ],
+  "$defs": {
+    "id": { "type": "string", "minLength": 1, "maxLength": 160, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$" },
+    "read": {
+      "type": "object", "additionalProperties": false, "required": ["agentId"],
+      "properties": { "agentId": { "$ref": "#/$defs/id" }, "limit": { "type": "integer", "minimum": 1, "maximum": 32 } }
+    },
+    "respond": {
+      "type": "object", "additionalProperties": false, "required": ["agentId", "response"],
+      "properties": {
+        "agentId": { "$ref": "#/$defs/id" },
+        "response": { "$ref": "#/$defs/responseInput" }
+      }
+    },
+    "responseInput": {
+      "type": "object", "additionalProperties": false,
+      "required": ["interactionId", "requestSha256", "responseId", "operator", "selectedResponse", "providerResponse", "respondedAtUtc"],
+      "properties": {
+        "interactionId": { "$ref": "#/$defs/id" }, "responseId": { "$ref": "#/$defs/id" },
+        "requestSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "operator": { "type": "object" },
+        "selectedResponse": { "enum": ["accept", "cancel", "decline", "deny", "grant", "submit-text"] },
+        "providerResponse": { "type": "object" },
+        "respondedAtUtc": { "type": "string", "format": "date-time", "maxLength": 64 }
+      }
+    },
+    "interrupt": {
+      "type": "object", "additionalProperties": false, "required": ["agentId", "operationId"],
+      "properties": { "agentId": { "$ref": "#/$defs/id" }, "operationId": { "$ref": "#/$defs/id" } }
+    },
+    "interruptReceipt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["operationId", "turnId", "state", "automaticRetryAllowed"],
+      "properties": {
+        "operationId": { "$ref": "#/$defs/id" }, "turnId": { "$ref": "#/$defs/id" },
+        "state": { "enum": ["requested", "accepted", "uncertain"] },
+        "automaticRetryAllowed": { "const": false }
+      }
+    }
+  }
+}

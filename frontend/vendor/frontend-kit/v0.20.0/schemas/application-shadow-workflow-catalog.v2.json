@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/application-shadow-workflow-catalog.v2.json",
+  "title": "Application Shadow Workflow Catalog v0.2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "contractVersion", "catalogId", "workflows"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "contractVersion": { "const": "v0.2.0" },
+    "catalogId": { "const": "application-shadow-workflows" },
+    "workflows": {
+      "type": "array", "minItems": 16, "maxItems": 16,
+      "items": { "$ref": "#/$defs/workflow" }
+    }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]{1,95}$" },
+    "ids": {
+      "type": "array", "minItems": 1, "maxItems": 32, "uniqueItems": true,
+      "items": { "$ref": "#/$defs/id" }
+    },
+    "step": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "stepId", "boundaryKind", "boundaryId", "support", "effect", "expectedEvidence"
+      ],
+      "properties": {
+        "stepId": { "$ref": "#/$defs/id" },
+        "boundaryKind": { "enum": ["application-operation", "contract-action"] },
+        "boundaryId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*(\\.[a-z][a-z0-9-]*){1,5}$",
+          "maxLength": 128
+        },
+        "support": { "enum": ["implemented", "contract-only", "compatibility-only"] },
+        "effect": { "enum": ["read", "decision", "mutation"] },
+        "expectedEvidence": { "$ref": "#/$defs/ids" }
+      },
+      "allOf": [{
+        "if": {
+          "properties": { "boundaryKind": { "const": "application-operation" } },
+          "required": ["boundaryKind"]
+        },
+        "then": { "properties": { "support": { "const": "implemented" } } }
+      }]
+    },
+    "workflow": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "workflowId", "title", "riskClass", "confirmationPolicy", "recoveryPolicy",
+        "measurementIds", "steps"
+      ],
+      "properties": {
+        "workflowId": { "$ref": "#/$defs/id" },
+        "title": { "type": "string", "minLength": 3, "maxLength": 96 },
+        "riskClass": { "enum": ["read-only", "decision", "mutation"] },
+        "confirmationPolicy": { "enum": ["none", "interaction-bound", "before-execution"] },
+        "recoveryPolicy": {
+          "enum": [
+            "not-applicable", "rollback-required", "compensating-action",
+            "explicitly-unavailable"
+          ]
+        },
+        "measurementIds": { "$ref": "#/$defs/ids" },
+        "steps": {
+          "type": "array", "minItems": 1, "maxItems": 8,
+          "items": { "$ref": "#/$defs/step" }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "riskClass": { "const": "read-only" } }, "required": ["riskClass"] },
+          "then": {
+            "properties": {
+              "confirmationPolicy": { "const": "none" },
+              "recoveryPolicy": { "const": "not-applicable" },
+              "steps": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": { "effect": { "const": "read" } }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "riskClass": { "const": "decision" } }, "required": ["riskClass"] },
+          "then": {
+            "properties": {
+              "confirmationPolicy": { "const": "interaction-bound" },
+              "steps": {
+                "type": "array",
+                "contains": {
+                  "type": "object",
+                  "properties": { "effect": { "const": "decision" } },
+                  "required": ["effect"]
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "riskClass": { "const": "mutation" } }, "required": ["riskClass"] },
+          "then": {
+            "properties": {
+              "confirmationPolicy": { "not": { "const": "none" } },
+              "recoveryPolicy": { "not": { "const": "not-applicable" } },
+              "steps": {
+                "type": "array",
+                "contains": {
+                  "type": "object",
+                  "properties": { "effect": { "const": "mutation" } },
+                  "required": ["effect"]
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

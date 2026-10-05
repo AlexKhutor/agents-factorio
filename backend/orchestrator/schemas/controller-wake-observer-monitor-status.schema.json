@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://isolate-vscode.local/schemas/controller-wake-observer-monitor-status.schema.json",
+  "title": "Controller Wake Observer Monitor Status",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "monitorId",
+    "processId",
+    "state",
+    "health",
+    "updatedAtUtc"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "monitorId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "processId": { "type": "integer", "minimum": 1 },
+    "state": { "enum": ["watching", "closed"] },
+    "health": { "enum": ["ready", "stale", "engine-stopped", "closed"] },
+    "observerInstanceId": { "type": ["string", "null"], "maxLength": 128 },
+    "observerProcessId": { "type": ["integer", "null"], "minimum": 1 },
+    "startedAtUtc": { "type": ["string", "null"], "format": "date-time" },
+    "updatedAtUtc": { "type": "string", "format": "date-time" },
+    "closedAtUtc": { "type": ["string", "null"], "format": "date-time" },
+    "closeReason": { "type": ["string", "null"], "maxLength": 128 }
+  },
+  "additionalProperties": false
+}
