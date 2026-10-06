@@ -177,8 +177,10 @@ Agents Factorio keeps evolving: it is developed together with the work it is
 used for, and improvements land here regularly ([CHANGELOG.md](CHANGELOG.md)).
 Next: **Codex CLI agents** next to Claude Code ones, **local agents and
 harnesses** (DeepSeek-based harnesses, Hermes, Qoder and other local
-solutions), desk agents managed from Atlas, and a faster first run. The full
-list is in [ROADMAP.md](ROADMAP.md); ideas and bug reports are welcome in
+solutions), desk agents managed from Atlas, and a faster first run. Later: a
+**VR cockpit** - the agent map and chats in a headset, with a PlayStation VR2
+and SteamVR prototype from earlier research. The full list is in
+[ROADMAP.md](ROADMAP.md); ideas and bug reports are welcome in
 [Issues](https://github.com/AlexKhutor/agents-factorio/issues).
 
 ## License
